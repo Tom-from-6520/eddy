@@ -481,4 +481,7 @@ import './contrib/editTelemetry/browser/editTelemetry.contribution.js';
 // Opener
 import './contrib/opener/browser/opener.contribution.js';
 
+// Contexts (context-ide fork)
+import './contrib/contexts/browser/contexts.contribution.js';
+
 //#endregion
