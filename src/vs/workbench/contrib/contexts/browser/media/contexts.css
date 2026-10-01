@@ -1,0 +1,36 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.contexts-board {
+	height: 100%;
+}
+
+.contexts-board .context-row {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	height: 100%;
+	padding: 0 12px;
+}
+
+.contexts-board .context-row .context-icon {
+	flex-shrink: 0;
+	opacity: 0.6;
+}
+
+.contexts-board .context-row .context-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.contexts-board .context-row.active .context-icon {
+	opacity: 1;
+	color: var(--vscode-focusBorder);
+}
+
+.contexts-board .context-row.active .context-name {
+	font-weight: 600;
+}
