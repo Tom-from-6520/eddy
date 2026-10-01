@@ -297,7 +297,7 @@
   "allowScripts": {
     "bufferutil@4.1.0": true,
     "cpu-features": false,
-    "foundry-local-sdk@2.0.1": true,
+    "foundry-local-sdk@2.0.1": false,
     "kerberos@2.1.1": true,
     "koffi@3.2.1": false,
     "native-keymap@3.3.9": true,
