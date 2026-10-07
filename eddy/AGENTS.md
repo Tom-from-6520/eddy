@@ -17,3 +17,15 @@
   git push --force-with-lease origin main
   ```
 - Check what eddy changes: `git log --oneline <base-tag>..main` and `git diff --stat <base-tag> main`.
+
+## Pushing
+
+- `origin` is pinned to the GitHub account in its URL (`https://Tom-from-6520@github.com/...`), so Git Credential Manager uses that account's stored login without prompting.
+- Upstream keeps Copilot simulation-test caches (`extensions/copilot/**/*.sqlite`) in **Git LFS**. GitHub rejects pushes whose history refers to LFS objects it doesn't have (`GH008`). **Never push with `--no-verify`**: that skips the LFS upload hook.
+- After syncing to a new upstream tag, fetch any new LFS objects from upstream before pushing:
+  ```powershell
+  git lfs fetch --all upstream main
+  git lfs push --all origin main
+  git push --force-with-lease origin main
+  ```
+- Cloning eddy elsewhere: a normal `git clone` works, since the LFS objects are on GitHub (about 0.26 GB).
