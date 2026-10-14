@@ -28,7 +28,10 @@ install_deps() {
 	if ! command -v node >/dev/null || [ "$(node -v)" != "v$version" ]; then
 		arch_url="https://nodejs.org/dist/v$version/node-v$version-linux-x64.tar.xz"
 		echo "Installing Node $version"
+		# Remove a previous global npm first: unpacking over it mixes two npm versions and breaks npm.
+		rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack
 		curl -fsSL "$arch_url" | tar -xJ -C /usr/local --strip-components=1
+		hash -r
 	fi
 	node -v
 	npm -v
