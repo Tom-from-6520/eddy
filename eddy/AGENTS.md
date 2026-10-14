@@ -24,10 +24,11 @@
 - Set once (user environment): `FOUNDRY_LOCAL_SKIP_INSTALL=1` (its install script downloads from NuGet, which some networks block) and, with Visual Studio 2026, `vs2022_install=<VS install folder>` (upstream's preinstall check only knows VS 2019/2022). Visual Studio needs the Spectre-mitigated libs for its **default** MSVC toolset.
 - `npm ci`, then `npm run watch`; wait for the first build to finish before launching `.\scripts\code.bat` (the dev build lists CSS files once at startup).
 
-## Releases (CI)
+## Releases
 
 - `.github/workflows/eddy-build.yml` builds the Windows x64 user installer + a portable zip.
-- Release: tag `v<upstream-version>-eddy.<n>` and push the tag, e.g. `git tag v1.141.0-eddy.1; git push origin v1.141.0-eddy.1`. The workflow creates a GitHub Release with the installer, zip and `SHA256SUMS.txt`.
+- **While GitHub Actions is unavailable (billing), release from a local build:** `pwsh eddy/scripts/release.ps1 -Tag v<upstream-version>-eddy.<n>`. It runs the same build steps, checks the build matches `HEAD` (which must be pushed), and creates the GitHub Release with the installer, zip and `SHA256SUMS.txt`. `-SkipBuild` reuses the last local build.
+- With CI: tag `v<upstream-version>-eddy.<n>` and push the tag, e.g. `git tag v1.141.0-eddy.1; git push origin v1.141.0-eddy.1`. If the release already exists (local release), CI replaces its files.
 - Test build without releasing: run the workflow manually (Actions → eddy build → Run workflow); the installer is kept as a run artifact for 14 days.
 - Branding lives in `product.json` (name, data folder `.eddy`, installer app IDs). Never change the `win32*AppId` GUIDs: they identify the installed app for upgrades.
 
