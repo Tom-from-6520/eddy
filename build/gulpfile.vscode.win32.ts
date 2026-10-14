@@ -85,8 +85,9 @@ function buildWin32Setup(arch: string, target: string): task.CallbackTask {
 			NameLong: product.nameLong,
 			NameShort: product.nameShort,
 			DirName: product.win32DirName,
-			Version: pkg.version,
-			RawVersion: pkg.version.replace(/-\w+$/, ''),
+			// eddy: the installer (and the installed-apps list) shows eddy's version
+			Version: (product as typeof product & { eddyVersion?: string }).eddyVersion ?? pkg.version,
+			RawVersion: ((product as typeof product & { eddyVersion?: string }).eddyVersion ?? pkg.version).replace(/-\w+$/, ''),
 			Commit: commit,
 			NameVersion: product.win32NameVersion + (target === 'user' ? ' (User)' : ''),
 			ExeBasename: product.nameShort,
