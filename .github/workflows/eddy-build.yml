@@ -1,0 +1,103 @@
+# eddy: Windows x64 build.
+# - Push a tag `v<upstream-version>-eddy.<n>` (e.g. v1.141.0-eddy.1) -> build + GitHub Release.
+# - Run manually (Actions -> eddy build -> Run workflow) -> build only, installer kept as a run artifact.
+name: eddy build
+
+on:
+  push:
+    tags: ['v*-eddy.*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: eddy-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows-x64:
+    name: Windows x64
+    runs-on: windows-2022
+    timeout-minutes: 240
+    env:
+      VSCODE_ARCH: x64
+      npm_config_arch: x64
+      ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+      FOUNDRY_LOCAL_SKIP_INSTALL: '1'
+      # Avoids GitHub API rate limits when the build downloads Electron and built-in extensions.
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Upstream's Copilot simulation-test caches are in LFS and not needed to build.
+          lfs: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          for ($i = 1; $i -le 3; $i++) {
+            npm ci
+            if ($LASTEXITCODE -eq 0) { exit 0 }
+            Write-Host "npm ci failed (attempt $i), retrying..."
+          }
+          exit 1
+
+      - name: Build app (minified)
+        shell: pwsh
+        run: npm run gulp vscode-win32-x64-min
+
+      - name: Build installer (user setup)
+        shell: pwsh
+        run: |
+          npm run gulp vscode-win32-x64-inno-updater
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm run gulp vscode-win32-x64-user-setup
+
+      - name: Collect outputs
+        id: collect
+        shell: pwsh
+        run: |
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          $commit = (git rev-parse HEAD).Substring(0, 10)
+          $label = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME.TrimStart('v') } else { "$version-$commit" }
+          New-Item -ItemType Directory dist | Out-Null
+          $setup = Get-ChildItem .build\win32-x64\user-setup -Filter *.exe | Select-Object -First 1
+          if (-not $setup) { throw 'user setup not found' }
+          Copy-Item $setup.FullName "dist\eddy-$label-win32-x64-user-setup.exe"
+          Compress-Archive -Path ..\VSCode-win32-x64\* -DestinationPath "dist\eddy-$label-win32-x64.zip"
+          Get-ChildItem dist | ForEach-Object {
+            $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower()
+            "$hash  $($_.Name)" | Add-Content dist\SHA256SUMS.txt
+          }
+          Get-ChildItem dist | Format-Table Name, Length
+          "label=$label" >> $env:GITHUB_OUTPUT
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: eddy-${{ steps.collect.outputs.label }}-win32-x64
+          path: dist/*
+          retention-days: 14
+
+      - name: Create GitHub Release
+        if: github.ref_type == 'tag'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create $env:GITHUB_REF_NAME (Get-ChildItem dist).FullName `
+            --title "eddy $env:GITHUB_REF_NAME" `
+            --generate-notes
