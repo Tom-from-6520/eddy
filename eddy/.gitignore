@@ -1,3 +1,5 @@
 # Local-only: contains internal (Microsoft) details. Never commit or push.
 DESIGN.md
 tools/
+DESIGN-*.md
+design-input/
