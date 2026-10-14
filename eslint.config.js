@@ -144,7 +144,8 @@ export default defineConfig(
 				'block',
 				[
 					'---------------------------------------------------------------------------------------------',
-					' *  Copyright (c) Microsoft Corporation. All rights reserved.',
+					// eddy: eddy-authored files carry the eddy contributors' copyright; upstream files keep Microsoft's.
+					{ pattern: '^ \\*  Copyright \\(c\\) (Microsoft Corporation|eddy contributors)\\. All rights reserved\\.$', template: ' *  Copyright (c) Microsoft Corporation. All rights reserved.' },
 					' *  Licensed under the MIT License. See License.txt in the project root for license information.',
 					' *--------------------------------------------------------------------------------------------'
 				]

@@ -163,7 +163,9 @@ export function hygiene(some: NodeJS.ReadWriteStream | string[] | undefined, run
 		const lines = file.__lines;
 
 		for (let i = 0; i < copyrightHeaderLines.length; i++) {
-			if (lines[i] !== copyrightHeaderLines[i]) {
+			// eddy: eddy-authored files carry the eddy contributors' copyright; upstream files keep Microsoft's.
+			const ok = lines[i] === copyrightHeaderLines[i] || (i === 1 && lines[i] === ' *  Copyright (c) eddy contributors. All rights reserved.');
+			if (!ok) {
 				console.error(file.relative + ': Missing or bad copyright statement');
 				errorCount++;
 				break;
