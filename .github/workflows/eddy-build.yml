@@ -148,7 +148,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       LABEL: ${{ needs.label.outputs.label }}
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # The built-in Actions token can't create releases on this account (HTTP 403 despite contents: write), so
+      # publishing uses a fine-grained token with Contents: read and write on this repo, stored as EDDY_RELEASE_TOKEN.
+      GH_TOKEN: ${{ secrets.EDDY_RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
       REPO: ${{ github.repository }}
       TAG: ${{ github.ref_name }}
       COMMIT: ${{ github.sha }}
