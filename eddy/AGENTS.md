@@ -26,7 +26,7 @@
 
 ## Releases
 
-- `.github/workflows/eddy-build.yml` builds the Windows x64 user installer + a portable zip.
+- `.github/workflows/eddy-build.yml` builds the Windows x64 user installer + a portable zip. **It is currently disabled on GitHub** because the account's Actions billing blocks jobs. Re-enable it (Actions → eddy build → Enable workflow) once billing is sorted.
 - **While GitHub Actions is unavailable (billing), release from a local build:** `pwsh eddy/scripts/release.ps1 -Tag v<upstream-version>-eddy.<n>`. It runs the same build steps, checks the build matches `HEAD` (which must be pushed), and creates the GitHub Release with the installer, zip and `SHA256SUMS.txt`. `-SkipBuild` reuses the last local build.
 - With CI: tag `v<upstream-version>-eddy.<n>` and push the tag, e.g. `git tag v1.141.0-eddy.1; git push origin v1.141.0-eddy.1`. If the release already exists (local release), CI replaces its files.
 - Test build without releasing: run the workflow manually (Actions → eddy build → Run workflow); the installer is kept as a run artifact for 14 days.
