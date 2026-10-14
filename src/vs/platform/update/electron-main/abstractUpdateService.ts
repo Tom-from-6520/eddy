@@ -17,7 +17,7 @@ import { IEnvironmentMainService } from '../../environment/electron-main/environ
 import { ILifecycleMainService, LifecycleMainPhase } from '../../lifecycle/electron-main/lifecycleMainService.js';
 import { ILogService } from '../../log/common/log.js';
 import { IProductService } from '../../product/common/productService.js';
-import { IRequestService } from '../../request/common/request.js';
+import { asJson, IRequestService } from '../../request/common/request.js';
 import { StorageScope, StorageTarget } from '../../storage/common/storage.js';
 import { IApplicationStorageMainService } from '../../storage/electron-main/storageMainService.js';
 import { ITelemetryService } from '../../telemetry/common/telemetry.js';
@@ -677,8 +677,10 @@ export abstract class AbstractUpdateService extends Disposable implements IUpdat
 			const context = await this.requestService.request({ url, headers, callSite: 'updateService.isLatestVersion' }, token);
 			const statusCode = context.res.statusCode;
 			this.logService.trace('update#isLatestVersion() - response', { statusCode });
-			// The update server replies with 204 (No Content) when no update is available.
-			return statusCode === 204;
+			// eddy: the static feed always answers 200 with the latest build's manifest (upstream's server answers
+			// 204 when nothing is newer), so `commit` is the latest unless the manifest names another commit.
+			const update = await asJson<IUpdate>(context);
+			return !isNewerBuild(update, commit ?? this.productService.commit);
 
 		} catch (error) {
 			this.logService.error('update#isLatestVersion(): failed to check for updates');
