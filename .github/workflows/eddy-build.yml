@@ -55,6 +55,14 @@ jobs:
           }
           exit 1
 
+      - name: Add signtool to PATH
+        shell: pwsh
+        run: |
+          # Packaging strips signatures from bundled native binaries with signtool.exe (Windows SDK).
+          $signtool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin" -Recurse -Filter signtool.exe |
+            Where-Object { $_.FullName -match '\\x64\\' } | Sort-Object FullName -Descending | Select-Object -First 1
+          $signtool.DirectoryName >> $env:GITHUB_PATH
+
       - name: Build app (minified)
         shell: pwsh
         run: npm run gulp vscode-win32-x64-min
