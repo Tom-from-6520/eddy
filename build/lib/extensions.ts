@@ -483,7 +483,13 @@ export function packageCopilotExtensionStream(): Stream {
 		localExtensionsStream,
 		gulp.src(dependenciesSrc, { base: '.' })
 			.pipe(util2.cleanNodeModules(path.join(root, 'build', '.moduleignore')))
-			.pipe(util2.cleanNodeModules(path.join(root, 'build', `.moduleignore.${process.platform}`)))
+			.pipe(util2.cleanNodeModules(path.join(root, 'build', `.moduleignore.${process.platform}`))),
+		// eddy: `.moduleignore` strips `@github/copilot` (meant for the app's own node_modules), but the
+		// built-in Copilot extension needs it (see `prepareBuiltInCopilotRipgrepShim`). Upstream CI never
+		// hits this because it ships the extension as a downloaded VSIX instead of building it from source.
+		// Native addons for other platforms are dropped (eddy packages for the build machine's platform).
+		gulp.src('extensions/copilot/node_modules/@github/copilot/**', { base: '.', dot: true, allowEmpty: true })
+			.pipe(filter(['**', '!**/*.{darwin,linux,win32}-*.node', `**/*.${process.platform}-${process.arch}*.node`]))
 	).pipe(util2.setExecutableBit(['**/*.sh']));
 }
 
