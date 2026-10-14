@@ -1,0 +1,60 @@
+# eddy checks for every push to main and every pull request: type-check and compile, lint eddy's
+# changes, and run eddy's unit tests (test files with the eddy contributors' header).
+name: eddy checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: eddy-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Compile, lint, unit tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+      FOUNDRY_LOCAL_SKIP_INSTALL: '1'
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+          fetch-depth: 0
+
+      - name: Install system dependencies and Node
+        run: |
+          sudo ./eddy/scripts/linux-build.sh deps
+          sudo apt-get install -y --no-install-recommends xvfb
+
+      - name: Install npm dependencies
+        run: |
+          for i in 1 2 3; do npm ci && break; [ "$i" = 3 ] && exit 1; echo "npm ci failed, retrying..."; done
+
+      - name: Compile (includes type-check)
+        run: npm run compile-client
+
+      - name: Lint changed files
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -z "$BASE" ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then BASE=HEAD~1; fi
+          files=$(git diff --name-only --diff-filter=d "$BASE" HEAD -- '*.ts' '*.js' | grep -E '^(src|build)/' || true)
+          echo "Linting:"; echo "$files"
+          [ -z "$files" ] || npx eslint $files
+
+      - name: Unit tests (eddy)
+        run: |
+          tests=$(grep -rl --include='*.test.ts' 'Copyright (c) eddy contributors' src | sort)
+          echo "Running:"; echo "$tests"
+          args=""; for t in $tests; do args="$args --run $t"; done
+          xvfb-run -a ./scripts/test.sh $args
