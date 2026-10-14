@@ -513,5 +513,8 @@ import '../workbench/contrib/chat/browser/onboarding/modelPickerTryout.contribut
 import '../workbench/contrib/codeEditor/browser/diffEditorTryout.contribution.js';
 import './contrib/onboardingTours/browser/onboardingTours.contribution.js';
 
+// eddy: Working Contexts
+import './contrib/workingContexts/browser/workingContexts.contribution.js';
+
 import './services/sessions/browser/sessionsManagementService.js';
 //#endregion

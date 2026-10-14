@@ -80,7 +80,8 @@ export function getCustomizationsPresentation(phoneLayout: boolean, aiEnabled: b
 	return treatment ? 'treatment' : 'control';
 }
 
-export const SessionsViewGroupingContext = new RawContextKey<string>('sessionsViewPane.grouping', SessionsGrouping.Workspace);
+// eddy: default to time grouping, so Working Contexts (custom groups) come first and ungrouped threads follow by date.
+export const SessionsViewGroupingContext = new RawContextKey<string>('sessionsViewPane.grouping', SessionsGrouping.Date);
 export const SessionsViewSortingContext = new RawContextKey<string>('sessionsViewPane.sorting', SessionsSorting.Created);
 export const SessionsViewCompactContext = new RawContextKey<boolean>('sessionsViewPane.compact', false);
 export const IsWorkspaceGroupCappedContext = new RawContextKey<boolean>('sessionsViewPane.workspaceGroupCapped', true);
@@ -161,7 +162,7 @@ export class SessionsView extends ViewPane {
 	private readonly customizationsNavigationVisible = observableValue(this, false);
 	private readonly customizationsNavigationState: CustomizationsNavigationState;
 	private customizationsPresentation: CustomizationsPresentation = 'hidden';
-	private currentGrouping: SessionsGrouping = SessionsGrouping.Workspace;
+	private currentGrouping: SessionsGrouping = SessionsGrouping.Date;
 	private currentSorting: SessionsSorting = SessionsSorting.Created;
 	private currentCompact = false;
 	private groupingContextKey: IContextKey | undefined;

@@ -899,7 +899,7 @@ registerAction2(class DeleteEmptySessionGroupAction extends Action2 {
 	constructor() {
 		super({
 			id: 'sessionsView.deleteEmptyGroup',
-			title: localize2('deleteEmptyGroup', "Delete Group"),
+			title: localize2('deleteEmptyGroup', "Delete Context"),
 			icon: Codicon.trash,
 			menu: [{
 				id: SessionGroupToolbarMenuId,
@@ -924,7 +924,7 @@ registerAction2(class NewSessionInGroupAction extends Action2 {
 	constructor() {
 		super({
 			id: 'sessionsView.newSessionInGroup',
-			title: localize2('newSessionInGroup', "New Session"),
+			title: localize2('newSessionInGroup', "New Thread"),
 			icon: Codicon.plus,
 			menu: [{
 				id: SessionGroupToolbarMenuId,
