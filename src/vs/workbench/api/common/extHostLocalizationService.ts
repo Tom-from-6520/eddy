@@ -6,6 +6,7 @@
 import { LANGUAGE_DEFAULT } from '../../../base/common/platform.js';
 import { format2 } from '../../../base/common/strings.js';
 import { URI } from '../../../base/common/uri.js';
+import { brandMessage } from '../../../nls.js';
 import { IExtensionDescription } from '../../../platform/extensions/common/extensions.js';
 import { createDecorator } from '../../../platform/instantiation/common/instantiation.js';
 import { ILogService } from '../../../platform/log/common/log.js';
@@ -35,7 +36,7 @@ export class ExtHostLocalizationService implements ExtHostLocalizationShape {
 	getMessage(extensionId: string, details: IStringDetails): string {
 		const { message, args, comment } = details;
 		if (this.isDefaultLanguage) {
-			return format2(message, (args ?? {}));
+			return format2(brandMessage(message), (args ?? {}));
 		}
 
 		let key = message;
@@ -46,7 +47,7 @@ export class ExtHostLocalizationService implements ExtHostLocalizationShape {
 		if (!str) {
 			this.logService.warn(`Using default string since no string found in i18n bundle that has the key: ${key}`);
 		}
-		return format2(str ?? message, (args ?? {}));
+		return format2(brandMessage(str ?? message), (args ?? {}));
 	}
 
 	getBundle(extensionId: string): { [key: string]: string } | undefined {

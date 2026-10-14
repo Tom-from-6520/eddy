@@ -1,14 +1,9 @@
 ---
-name: Feature request
-about: Suggest an idea for this project
-title: ''
-labels: ''
-assignees: ''
-
+name: Idea or feature request
+about: Suggest a change to eddy
+labels: enhancement
 ---
 
-<!-- ⚠️⚠️ Do Not Delete This! feature_request_template ⚠️⚠️ -->
-<!-- Please read our Rules of Conduct: https://opensource.microsoft.com/codeofconduct/ -->
-<!-- Please search existing issues to avoid creating duplicates. -->
+**What would you like eddy to do?**
 
-<!-- Describe the feature you'd like. -->
+**Why (the situation you're in when you need it):**

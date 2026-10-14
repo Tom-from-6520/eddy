@@ -6,7 +6,7 @@
 import { isObject, isString } from '../../../base/common/types.js';
 import { ILocalizedString } from '../../action/common/action.js';
 import { IExtensionManifest } from '../../extensions/common/extensions.js';
-import { localize } from '../../../nls.js';
+import { brandMessage, localize } from '../../../nls.js';
 import { ILogger } from '../../log/common/log.js';
 
 export interface ITranslations {
@@ -41,11 +41,13 @@ function replaceNLStrings(logger: ILogger, extensionManifest: IExtensionManifest
 				if (translated === undefined && originalMessages) {
 					translated = originalMessages[messageKey];
 				}
-				const message: string | undefined = typeof translated === 'string' ? translated : translated?.message;
+				const translatedMessage: string | undefined = typeof translated === 'string' ? translated : translated?.message;
+				const message = translatedMessage && brandMessage(translatedMessage); // eddy
 
 				// This branch returns ILocalizedString's instead of Strings so that the Command Palette can contain both the localized and the original value.
 				const original = originalMessages?.[messageKey];
-				const originalMessage: string | undefined = typeof original === 'string' ? original : original?.message;
+				const rawOriginalMessage: string | undefined = typeof original === 'string' ? original : original?.message;
+				const originalMessage = rawOriginalMessage && brandMessage(rawOriginalMessage); // eddy
 
 				if (!message) {
 					if (!originalMessage) {

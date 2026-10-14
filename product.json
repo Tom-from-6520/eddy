@@ -6,8 +6,8 @@
 	"sharedDataFolderName": ".eddy-shared",
 	"win32MutexName": "eddy",
 	"licenseName": "MIT",
-	"licenseUrl": "https://github.com/microsoft/vscode/blob/main/LICENSE.txt",
-	"serverLicenseUrl": "https://github.com/microsoft/vscode/blob/main/LICENSE.txt",
+	"licenseUrl": "https://github.com/Tom-from-6520/eddy/blob/main/LICENSE.txt",
+	"serverLicenseUrl": "https://github.com/Tom-from-6520/eddy/blob/main/LICENSE.txt",
 	"serverGreeting": [],
 	"serverLicense": [],
 	"serverLicensePrompt": "",
@@ -245,6 +245,5 @@
 	"builtInExtensionsEnabledWithAutoUpdates": [
 		"GitHub.copilot-chat"
 	],
-	"sessionsWindowAllowedExtensions": [],
-	"voiceWsUrl": "wss://falcon-caas.mai.microsoft.com/voice-code/api/v1/realtime/voice"
+	"sessionsWindowAllowedExtensions": []
 }
