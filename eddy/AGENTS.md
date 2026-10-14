@@ -29,6 +29,12 @@
 - `.github/workflows/eddy-build.yml` builds the Windows x64 user installer + a portable zip. **It is currently disabled on GitHub** because the account's Actions billing blocks jobs. Re-enable it (Actions → eddy build → Enable workflow) once billing is sorted.
 - **While GitHub Actions is unavailable (billing), release from a local build:** `pwsh eddy/scripts/release.ps1 -Tag v<upstream-version>-eddy.<n>`. It runs the same build steps, checks the build matches `HEAD` (which must be pushed), and creates the GitHub Release with the installer, zip and `SHA256SUMS.txt`. `-SkipBuild` reuses the last local build.
 - With CI: tag `v<upstream-version>-eddy.<n>` and push the tag, e.g. `git tag v1.141.0-eddy.1; git push origin v1.141.0-eddy.1`. If the release already exists (local release), CI replaces its files.
+- **Linux (x64 `.deb` + `.tar.gz`)** is built in WSL (Ubuntu 24.04) from a clone on the Linux disk (`/root/eddy`), not from `/mnt/c` (too slow):
+  ```powershell
+  wsl -d Ubuntu-24.04 -u root -- bash -c 'cd /root/eddy && git fetch --depth 1 origin main && git reset --hard FETCH_HEAD && ./eddy/scripts/linux-build.sh build'
+  pwsh eddy/scripts/release-linux.ps1 -Tag v<upstream-version>-eddy.<n>   # attach to the existing release
+  ```
+  `linux-build.sh deps` (once, as root) installs the apt packages and Node. The build follows upstream's Linux pipeline (glibc 2.28 sysroot, Chromium clang), so the `.deb` also runs on older Ubuntu/Debian releases. The Rust tunnel CLI (`bin/eddy-tunnel`) isn't built on any platform. To start eddy inside WSL, set `DONT_PROMPT_WSL_INSTALL=1`.
 - Test build without releasing: run the workflow manually (Actions → eddy build → Run workflow); the installer is kept as a run artifact for 14 days.
 - Branding lives in `product.json` (name, data folder `.eddy`, installer app IDs). Never change the `win32*AppId` GUIDs: they identify the installed app for upgrades.
 
