@@ -280,6 +280,9 @@ import './contrib/tunnelHost/electron-browser/tunnelHost.contribution.js';
 // Sessions (desktop only)
 import './contrib/sessions/electron-browser/sessions.contribution.js';
 
+// eddy: Working Contexts (desktop only)
+import './contrib/workingContexts/electron-browser/workingContexts.contribution.js';
+
 //#endregion
 
 export { main } from './electron-browser/sessions.main.js';

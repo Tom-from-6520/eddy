@@ -19,6 +19,7 @@ import { CONTEXTS_VIEW_CONTAINER_ID, CONTEXTS_VIEW_ID, ContextsCountContext, ICo
 import { SWITCH_CONTEXT_COMMAND_ID } from './contextsActions.js';
 import { ContextsService } from './contextsService.js';
 import { ContextsViewPane } from './contextsView.js';
+import '../common/eddyConfiguration.js';
 
 registerSingleton(IContextsService, ContextsService, InstantiationType.Delayed);
 

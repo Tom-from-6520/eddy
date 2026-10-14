@@ -1654,6 +1654,15 @@ export class CodeApplication extends Disposable {
 					// remoteAuthority: will be determined based on macOpenFiles
 				});
 			}
+
+			// eddy: the Agents window is the default window
+			if (!remoteAuthority && this.configurationService.getValue<string>('eddy.startupWindow') !== 'editor') {
+				return windowsMainService.openAgentsWindow({
+					context,
+					cli: args,
+					initialStartup: true
+				});
+			}
 		}
 
 		// default: read paths from cli

@@ -2680,7 +2680,7 @@ class SessionGroupRenderer implements ITreeRenderer<SessionListItem, FuzzyScore,
 
 		const input = template.elementDisposables.add(new InputBox(template.inputContainer, undefined, {
 			inputBoxStyles: defaultInputBoxStyles,
-			ariaLabel: localize('sessionGroupName', "Group name"),
+			ariaLabel: localize('sessionGroupName', "Context name"),
 		}));
 		input.value = element.group.name;
 		input.focus();
@@ -4692,8 +4692,8 @@ export class SessionsList extends Disposable implements ISessionsList {
 					element: {
 						placeholder: true as const,
 						sectionId,
-						label: localize('noSessionInGroup', "No session"),
-						hover: localize('noSessionInGroupHover', "Use Add to Group from a session's context menu, or drag it into this group."),
+						label: localize('noSessionInGroup', "No threads yet"),
+						hover: localize('noSessionInGroupHover', "Use Add to Context from a thread's context menu, or drag a thread into this context."),
 					}
 				}]
 				: renderSessionChildren(groupItem.sessions, sectionId, groupItem.group.name, !this.hasFindPattern && this.workspaceGroupCapped);
@@ -5298,7 +5298,7 @@ export class SessionsList extends Disposable implements ISessionsList {
 
 	private createGroup(groupSessions: ISession[]): void {
 		this._sessionsListModelService.unpinSessions(groupSessions);
-		const group = this._sessionGroupsService.createGroup(localize('newGroupName', "New Group"), groupSessions.map(s => s.sessionId));
+		const group = this._sessionGroupsService.createGroup(localize('newGroupName', "New Context"), groupSessions.map(s => s.sessionId));
 		this._editingGroupId = group.id;
 		this.update();
 		this.revealGroup(group.id);
@@ -5520,7 +5520,7 @@ export class SessionsList extends Disposable implements ISessionsList {
 	 * Groups in their current top-to-bottom display order. Groups are fully
 	 * user-managed (see {@link ISessionSectionOrderService}); the order defaults
 	 * to newest-first and is shared with the list. Used to keep the "Add to
-	 * Group" / "Move to Group" menu consistent with the rendered order.
+	 * Group" / "Move to Context" menu consistent with the rendered order.
 	 */
 	getGroupsInDisplayOrder(): ISessionGroup[] {
 		const groups = this._sessionGroupsService.getGroups();
@@ -5717,8 +5717,8 @@ export class SessionsList extends Disposable implements ISessionsList {
 
 	/**
 	 * Build the group-related context menu actions for the given session(s):
-	 * "Create Group", an "Add to Group"/"Move to Group" submenu listing the
-	 * groups in display order, and "Remove from Group" when applicable.
+	 * "New Working Context", an "Add to Context"/"Move to Context" submenu listing the
+	 * groups in display order, and "Remove from Context" when applicable.
 	 */
 	private getGroupSessionActions(selected: ISession[]): IAction[] {
 		const actions: IAction[] = [];
@@ -5738,14 +5738,14 @@ export class SessionsList extends Disposable implements ISessionsList {
 				label: g.name,
 				run: () => this.addSessionsToGroup(selected, g.id),
 			}));
-			const label = currentGroupId !== undefined ? localize('moveToGroupAction', "Move to Group") : localize('addToGroupAction', "Add to Group");
+			const label = currentGroupId !== undefined ? localize('moveToGroupAction', "Move to Context") : localize('addToGroupAction', "Add to Context");
 			actions.push(new SubmenuAction('sessions.addToGroupSubmenu', label, subActions));
 		}
 
 		if (currentGroupId !== undefined) {
 			actions.push(toAction({
 				id: 'sessions.removeFromGroup',
-				label: localize('removeFromGroupAction', "Remove from Group"),
+				label: localize('removeFromGroupAction', "Remove from Context"),
 				run: () => {
 					for (const session of selected) {
 						this._sessionGroupsService.removeFromGroup(session.sessionId);
@@ -5765,7 +5765,7 @@ export class SessionsList extends Disposable implements ISessionsList {
 	private getCreateGroupAction(sessions?: ISession[]): IAction {
 		return toAction({
 			id: 'sessions.createGroup',
-			label: localize('createGroupAction', "Create Group"),
+			label: localize('createGroupAction', "New Working Context"),
 			run: () => {
 				if (sessions) {
 					this.createGroupFromSessions(sessions);
@@ -5813,7 +5813,7 @@ export class SessionsList extends Disposable implements ISessionsList {
 	private getDeleteGroupAction(groupItem: ISessionGroupItem): IAction {
 		return toAction({
 			id: 'sessions.deleteGroupAction',
-			label: localize('deleteGroupAction', "Delete Group"),
+			label: localize('deleteGroupAction', "Delete Context"),
 			run: () => this._sessionGroupsService.deleteGroup(groupItem.group.id),
 		});
 	}

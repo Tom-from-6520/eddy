@@ -148,6 +148,11 @@ export class LaunchMainService implements ILaunchMainService {
 			usedWindows = await this.windowsMainService.openAgentsWindow(baseConfig);
 		}
 
+		// eddy: launching eddy again without arguments (e.g. from the Start menu) shows the Agents window
+		else if (!args._.length && !args['folder-uri'] && !args['file-uri'] && !args['new-window'] && !args.remote && !baseConfig.forceProfile && !baseConfig.forceTempProfile && this.configurationService.getValue<string>('eddy.startupWindow') !== 'editor') {
+			usedWindows = await this.windowsMainService.openAgentsWindow(baseConfig);
+		}
+
 		// Start without file/folder arguments
 		else if (!args._.length && !args['folder-uri'] && !args['file-uri']) {
 			let openNewWindow = false;

@@ -64,6 +64,7 @@ suite('Sessions - View Menu', () => {
 		ChatContextKeys.enabled.bindTo(contextKeyService).set(true);
 		const sorting = SessionsViewSortingContext.bindTo(contextKeyService);
 		const grouping = SessionsViewGroupingContext.bindTo(contextKeyService);
+		grouping.set(SessionsGrouping.Workspace); // eddy defaults to time grouping; these tests cover workspace mode
 		const capped = IsWorkspaceGroupCappedContext.bindTo(contextKeyService);
 		const compact = SessionsViewCompactContext.bindTo(contextKeyService);
 		const filters = store.add(new SessionsListFilters(store.add(new InMemoryStorageService()), store.add(new NullLogService())));
