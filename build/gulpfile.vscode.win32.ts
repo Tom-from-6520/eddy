@@ -5,7 +5,7 @@
 import assert from 'assert';
 import * as cp from 'child_process';
 import * as fs from 'fs';
-import { gulp } from './lib/gulp/facade.ts';
+import { gulp, rename } from './lib/gulp/facade.ts';
 import * as path from 'path';
 import rcedit from 'rcedit';
 import vfs from 'vinyl-fs';
@@ -142,7 +142,11 @@ defineWin32SetupTasks('arm64', 'user');
 
 function copyInnoUpdater(arch: string) {
 	return () => {
-		return gulp.src('build/win32/{inno_updater.exe,vcruntime140.dll}', { base: 'build/win32' })
+		// eddy: bundle inno_updater 0.23.0 (eddy/win32) instead of upstream's. Newer versions only support the versioned
+		// update layout, which needs Microsoft's own Electron build; 0.23 still falls back to the traditional update
+		// (new files staged in `{app}\_`), which works with public Electron.
+		return gulp.src(['build/win32/vcruntime140.dll', 'eddy/win32/inno_updater.exe'], { base: '.' })
+			.pipe(rename(p => { p.dirname = ''; }))
 			.pipe(vfs.dest(path.join(buildPath(arch), 'tools')));
 	};
 }
