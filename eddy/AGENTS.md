@@ -11,7 +11,7 @@
 ## Syncing with VS Code (rebase model)
 
 - Remotes: `origin` = eddy, `upstream` = microsoft/vscode (push disabled).
-- eddy's `main` is a short stack of commits on top of an upstream **release tag** (currently `1.141.0`).
+- eddy's `main` is a short stack of commits on top of an upstream **release tag** (currently `1.142.0`).
 - To move to a newer release:
   ```powershell
   git fetch upstream --tags
@@ -23,12 +23,13 @@
 
 ## Building locally
 
-- Set once (user environment): `FOUNDRY_LOCAL_SKIP_INSTALL=1` (its install script downloads from NuGet, which some networks block) and, with Visual Studio 2026, `vs2022_install=<VS install folder>` (upstream's preinstall check only knows VS 2019/2022). Visual Studio needs the Spectre-mitigated libs for its **default** MSVC toolset.
+- Set once (user environment): `FOUNDRY_LOCAL_SKIP_INSTALL=1` (its install script downloads from NuGet, which some networks block). Visual Studio 2026 is detected automatically since upstream 1.142.0 (for a custom install location, set `vs2026_install=<VS install folder>`). Visual Studio needs the Spectre-mitigated libs for its **default** MSVC toolset.
 - `npm ci`, then `npm run watch`; wait for the first build to finish before launching `.\scripts\code.bat` (the dev build lists CSS files once at startup).
+- Parallel work: use one Git worktree per task, next to the main clone: `git worktree add -b <branch> ..\eddy-worktrees\<name> main`. Each worktree has its own `node_modules` and build output, so run `npm ci` in it. Remove it with `git worktree remove ..\eddy-worktrees\<name>` when done.
 
 ## Releases and updates
 
-- **Versions:** eddy has its own version, `eddyVersion` in `product.json` (e.g. `0.1.4`), shown in About, release names, the installer, the installed-apps list and Linux packages. **0.1.x = alpha, 0.2.x = beta, 1.x = stable**; bump the patch number for each release. `quality` in `product.json` names the stage (`alpha`, `beta`, `stable`) and the update channel. The internal `version` (from `package.json`, e.g. `1.141.0`) stays the Code - OSS version because extensions check it (`engines.vscode`); never change it.
+- **Versions:** eddy has its own version, `eddyVersion` in `product.json` (e.g. `0.1.4`), shown in About, release names, the installer, the installed-apps list and Linux packages. **0.1.x = alpha, 0.2.x = beta, 1.x = stable**; bump the patch number for each release. `quality` in `product.json` names the stage (`alpha`, `beta`, `stable`) and the update channel. The internal `version` (from `package.json`, e.g. `1.142.0`) stays the Code - OSS version because extensions check it (`engines.vscode`); never change it.
 - **Release:** set `eddyVersion` in `product.json` (e.g. `0.1.5`), commit ("Release 0.1.5"), push, then `git tag v0.1.5; git push origin v0.1.5`. `.github/workflows/eddy-build.yml` checks that the tag matches `eddyVersion`, builds Windows x64 (user installer + portable zip) and Linux x64 (`.deb` + `.tar.gz`) in parallel, publishes the release (a pre-release unless `quality` is `stable`) with `SHA256SUMS.txt`, and updates the **update feed**. Publishing needs the repo secret **`EDDY_RELEASE_TOKEN`** (a fine-grained token with *Contents: read and write* on this repo): the built-in Actions token gets HTTP 403 when creating releases on this account. **Moving to beta:** set `quality` to `beta` and `eddyVersion` to `0.2.0`; a beta release also updates the alpha feed, so alpha installs move to beta (a stable release updates alpha and beta).
 - **Update feed:** the release tagged `updates` holds one JSON manifest per quality and platform (`alpha-win32-x64-user.json`, `alpha-win32-x64-archive.json`, `alpha-linux-x64.json`). Installed builds read `<updateUrl>/<quality>-<platform>.json` (patched `createUpdateURL` in `src/vs/platform/update/electron-main/abstractUpdateService.ts`); a manifest for another commit is an update. Windows (installed with the user setup) downloads and installs it in the background, then shows **Restart to Update**. The portable zip and Linux show **Download Update**, which opens the release page. The feed needs a **public** repo, because updates are downloaded without signing in.
 - **Checks:** `.github/workflows/eddy-checks.yml` runs on every push and pull request to `main`: compile (type-check), lint changed files, and eddy's unit tests (all test files with the eddy header).
