@@ -18,7 +18,7 @@ install_deps() {
 	export DEBIAN_FRONTEND=noninteractive
 	apt-get update
 	apt-get install -y --no-install-recommends \
-		build-essential pkg-config python3 git curl ca-certificates xz-utils file unzip \
+		build-essential pkg-config python3 python-is-python3 git curl ca-certificates xz-utils file unzip \
 		libx11-dev libxkbfile-dev libsecret-1-dev libkrb5-dev libgtk-3-0 libgbm1 libnss3 libasound2t64 \
 		fakeroot dpkg-dev rpm
 
@@ -41,6 +41,7 @@ build() {
 	# Upstream toolchain: glibc 2.28 sysroots, Chromium clang and libc++ (sets CC/CXX/CXXFLAGS/LDFLAGS).
 	# shellcheck disable=SC1091
 	source build/azure-pipelines/linux/setup-env.sh
+	[ -x .build/CR_Clang/bin/clang ] || { echo "toolchain setup failed (no Chromium clang)" >&2; exit 1; }
 
 	node build/npm/preinstall.ts
 	for i in 1 2 3; do
@@ -65,6 +66,7 @@ build() {
 	tar -czf "$dist/eddy-$label-linux-x64.tar.gz" -C .. VSCode-linux-x64
 	( cd "$dist" && sha256sum * > SHA256SUMS-linux.txt )
 	ls -la "$dist"
+	echo "LINUX_BUILD_OK"
 }
 
 case "${1:-}" in
