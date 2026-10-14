@@ -15,7 +15,7 @@ import { asJson, IRequestService } from '../../request/common/request.js';
 import { IApplicationStorageMainService } from '../../storage/electron-main/storageMainService.js';
 import { ITelemetryService } from '../../telemetry/common/telemetry.js';
 import { AvailableForDownload, IUpdate, State, StateType, UpdateType } from '../common/update.js';
-import { AbstractUpdateService, createUpdateURL, IUpdateURLOptions } from './abstractUpdateService.js';
+import { AbstractUpdateService, createUpdateURL, isNewerBuild, IUpdateURLOptions } from './abstractUpdateService.js';
 
 export class LinuxUpdateService extends AbstractUpdateService {
 
@@ -56,7 +56,7 @@ export class LinuxUpdateService extends AbstractUpdateService {
 					return;
 				}
 
-				if (!update || !update.url || !update.version || !update.productVersion) {
+				if (!isNewerBuild(update, this.productService.commit) || !update.url || !update.productVersion) {
 					this.setState(State.Idle(UpdateType.Archive, undefined, explicit || undefined));
 				} else {
 					this.setState(State.AvailableForDownload(update));

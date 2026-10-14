@@ -4,7 +4,9 @@
 
 - `eddy/` holds eddy's own docs and assets. The rest of the repo is VS Code plus eddy's changes.
 - `eddy/DESIGN.md` is the source of truth for design decisions. It is **local-only** (gitignored, because it contains internal details), so it may not exist in every clone. When it exists, read it first. When a decision is made or reversed, add a row to its Decision Log and update the affected sections and open questions.
-- Keep changes to upstream VS Code files minimal. Put new code in eddy-owned folders (e.g. `src/vs/workbench/contrib/contexts/`) and only add small hook lines to upstream files, so rebases stay cheap.
+- Keep changes to upstream VS Code files minimal. Put new code in eddy-owned folders (e.g. `src/vs/sessions/contrib/workingContexts/`) and only add small hook lines to upstream files, marked with an `eddy:` comment, so rebases stay cheap.
+- New eddy files use the header `Copyright (c) eddy contributors. All rights reserved.` (lint and hygiene accept it); upstream files keep Microsoft's header, as the MIT license requires.
+- User-facing "VS Code" text becomes "eddy" automatically: at build time for core UI strings (`build/next/nls-plugin.ts`) and at runtime for extension manifests and extension strings (`brandMessage` in `src/vs/nls.ts`). Don't edit upstream strings just to rename the product.
 
 ## Syncing with VS Code (rebase model)
 

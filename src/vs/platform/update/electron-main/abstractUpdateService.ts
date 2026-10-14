@@ -31,7 +31,9 @@ export interface IUpdateURLOptions {
 }
 
 export function createUpdateURL(baseUpdateUrl: string, platform: string, quality: string, commit: string, options?: IUpdateURLOptions): string {
-	const url = new URL(`${baseUpdateUrl}/api/update/${platform}/${quality}/${commit}`);
+	// eddy: updates come from a static feed (one JSON manifest per quality and platform, published with each
+	// release) instead of an update server. A manifest whose `version` is the running commit means "up to date".
+	const url = new URL(`${baseUpdateUrl}/${quality}-${platform}.json`);
 
 	if (options?.background) {
 		url.searchParams.set('bg', 'true');
@@ -40,6 +42,11 @@ export function createUpdateURL(baseUpdateUrl: string, platform: string, quality
 	url.searchParams.set('u', options?.internalOrg ?? 'none');
 
 	return url.toString();
+}
+
+/** eddy: with a static feed the manifest always describes the latest build; it's an update only if it's another commit. */
+export function isNewerBuild(update: IUpdate | null, currentCommit: string | undefined): update is IUpdate {
+	return !!update && !!update.version && update.version !== currentCommit;
 }
 
 /**
