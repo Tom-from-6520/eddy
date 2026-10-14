@@ -24,6 +24,14 @@ export interface ILocalizedString {
 	value: string;
 }
 
+// eddy: user-facing messages name the product instead of VS Code. Shipped builds apply this to the
+// core UI strings at build time (build/next/nls-plugin.ts); extension manifests and extension
+// strings apply it at runtime. Applied to message templates only, never to arguments.
+const productNamePattern = /\bVisual Studio Code\b|\bVS Code\b/g;
+export function brandMessage(message: string): string {
+	return message.indexOf('V') === -1 ? message : message.replace(productNamePattern, 'eddy');
+}
+
 function _format(message: string, args: (string | number | boolean | undefined | null)[]): string {
 	let result: string;
 

@@ -124,10 +124,14 @@ export async function finalizeNLS(
 		await fs.promises.mkdir(dir, { recursive: true });
 	}
 
+	// eddy: shipped UI strings name the product instead of VS Code (same rule as `brandMessage` in src/vs/nls.ts).
+	// Only the runtime message bundles are branded; metadata for translators keeps the original text.
+	const brandedMessages = allMessages.map(message => message.indexOf('V') === -1 ? message : message.replace(/\bVisual Studio Code\b|\bVS Code\b/g, 'eddy'));
+
 	await Promise.all(allOutDirs.flatMap(dir => [
 		fs.promises.writeFile(
 			path.join(dir, 'nls.messages.json'),
-			JSON.stringify(allMessages)
+			JSON.stringify(brandedMessages)
 		),
 		fs.promises.writeFile(
 			path.join(dir, 'nls.keys.json'),
@@ -139,7 +143,7 @@ export async function finalizeNLS(
 		),
 		fs.promises.writeFile(
 			path.join(dir, 'nls.messages.js'),
-			`/*---------------------------------------------------------\n * Copyright (C) Microsoft Corporation. All rights reserved.\n *--------------------------------------------------------*/\nglobalThis._VSCODE_NLS_MESSAGES=${serializeNlsData(allMessages)};`
+			`/*---------------------------------------------------------\n * Copyright (C) Microsoft Corporation. All rights reserved.\n *--------------------------------------------------------*/\nglobalThis._VSCODE_NLS_MESSAGES=${serializeNlsData(brandedMessages)};`
 		),
 	]));
 
