@@ -39,6 +39,15 @@ git fetch -q origin
 if (-not (git branch -r --contains $commit | Select-String 'origin/')) { throw "HEAD $commit is not pushed to origin." }
 
 $env:FOUNDRY_LOCAL_SKIP_INSTALL = '1'
+
+# Packaging strips signatures from bundled native binaries with signtool.exe (Windows SDK), which is usually not on PATH.
+if (-not (Get-Command signtool.exe -ErrorAction SilentlyContinue)) {
+	$signtool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin" -Recurse -Filter signtool.exe -ErrorAction SilentlyContinue |
+		Where-Object { $_.FullName -match '\\x64\\' } | Sort-Object FullName -Descending | Select-Object -First 1
+	if (-not $signtool) { throw 'signtool.exe not found. Install the Windows SDK (Visual Studio Installer -> Windows 11 SDK).' }
+	$env:PATH = "$($signtool.DirectoryName);$env:PATH"
+}
+
 if (-not $SkipBuild) {
 	Invoke-Step 'Build app (minified)' { npm run gulp vscode-win32-x64-min }
 	Invoke-Step 'Build inno updater' { npm run gulp vscode-win32-x64-inno-updater }
