@@ -35,6 +35,8 @@ jobs:
         run: |
           sudo ./eddy/scripts/linux-build.sh deps
           sudo apt-get install -y --no-install-recommends xvfb
+          # Allow unprivileged user namespaces for Chromium's namespace sandbox (Ubuntu 24.04 restricts them via AppArmor).
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 
       - name: Install npm dependencies
         run: |
