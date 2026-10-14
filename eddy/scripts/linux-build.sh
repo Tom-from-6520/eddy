@@ -6,6 +6,7 @@
 # Usage (Ubuntu 22.04+/Debian 12+, e.g. WSL):
 #   eddy/scripts/linux-build.sh deps      # once, as root: apt packages + Node from .nvmrc
 #   eddy/scripts/linux-build.sh build     # npm ci + package + .deb + .tar.gz
+#   eddy/scripts/linux-build.sh package   # only .deb + .tar.gz from the last app build
 # Outputs: .build/eddy-dist/linux/
 set -euo pipefail
 
@@ -51,13 +52,16 @@ build() {
 	done
 
 	npm run gulp vscode-linux-x64-min
+	package_deb_and_archive
+}
 
+package_deb_and_archive() {
 	npm run gulp vscode-linux-x64-prepare-deb
 	npm run gulp vscode-linux-x64-build-deb
 
 	local version commit label dist
 	version="$(node -p "require('./package.json').version")"
-	commit="$(git rev-parse --short=10 HEAD)"
+	commit="$(node -p "require('../VSCode-linux-x64/resources/app/product.json').commit.slice(0, 10)")"
 	label="${EDDY_LABEL:-$version-$commit}"
 	dist=".build/eddy-dist/linux"
 	rm -rf "$dist"
@@ -72,5 +76,6 @@ build() {
 case "${1:-}" in
 	deps) install_deps ;;
 	build) build ;;
-	*) echo "usage: $0 deps|build" >&2; exit 2 ;;
+	package) package_deb_and_archive ;;
+	*) echo "usage: $0 deps|build|package" >&2; exit 2 ;;
 esac
