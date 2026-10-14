@@ -8,7 +8,7 @@
 #>
 [CmdletBinding()]
 param(
-	[Parameter(Mandatory)][ValidatePattern('^v\d+\.\d+\.\d+-(eddy|alpha)\.\d+$')][string]$Tag,
+	[Parameter(Mandatory)][ValidatePattern('^v\d+\.\d+\.\d+$')][string]$Tag,
 	[string]$DistPath = '\\wsl.localhost\Ubuntu-24.04\root\eddy\.build\eddy-dist\linux',
 	[string]$Repo = 'Tom-from-6520/eddy'
 )

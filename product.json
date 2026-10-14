@@ -2,6 +2,7 @@
 	"nameShort": "eddy",
 	"nameLong": "eddy",
 	"applicationName": "eddy",
+	"eddyVersion": "0.1.4",
 	"quality": "alpha",
 	"updateUrl": "https://github.com/Tom-from-6520/eddy/releases/download/updates",
 	"dataFolderName": ".eddy",

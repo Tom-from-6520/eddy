@@ -9,7 +9,7 @@
 #>
 [CmdletBinding()]
 param(
-	[Parameter(Mandatory)][ValidatePattern('^v\d+\.\d+\.\d+-(eddy|alpha)\.\d+$')][string]$Tag,
+	[Parameter(Mandatory)][ValidatePattern('^v\d+\.\d+\.\d+$')][string]$Tag,
 	[switch]$SkipBuild,
 	[string]$Repo = 'Tom-from-6520/eddy'
 )

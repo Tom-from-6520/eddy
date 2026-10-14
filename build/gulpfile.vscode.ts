@@ -522,7 +522,7 @@ function patchWin32DependenciesTask(destinationFolderName: string) {
 					'LegalCopyright': 'Copyright (C) 2026 eddy contributors. Based on Code - OSS, Copyright (C) Microsoft Corporation', // eddy
 					'OriginalFilename': basename,
 					'ProductName': product.nameLong,
-					'ProductVersion': packageJson.version,
+					'ProductVersion': product.eddyVersion ?? packageJson.version, // eddy
 				}
 			});
 		});

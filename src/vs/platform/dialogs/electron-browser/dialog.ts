@@ -16,6 +16,9 @@ function formatCopilotVersion(version: string | undefined): string {
 
 export function createNativeAboutDialogDetails(productService: IProductService, osProps: IOSProperties): { title: string; details: string; detailsToCopy: string } {
 	let version = productService.version;
+	if (productService.eddyVersion) { // eddy: show eddy's version; the Code - OSS version is what extensions check
+		version = `${productService.eddyVersion}${productService.quality && productService.quality !== 'stable' ? ` ${productService.quality}` : ''} (Code - OSS ${version.replace(/-.*$/, '')})`;
+	}
 	if (productService.target) {
 		version = `${version} (${productService.target} setup)`;
 	} else if (productService.darwinUniversalAssetId) {

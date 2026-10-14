@@ -98,6 +98,8 @@ export interface IDictationRuntimeProductConfig {
 
 export interface IProductConfiguration {
 	readonly version: string;
+	/** eddy: eddy's own release version (e.g. 0.1.4), shown to people. `version` stays the Code - OSS version extensions check. */
+	readonly eddyVersion?: string;
 	readonly date?: string;
 	readonly quality?: string;
 	readonly commit?: string;
