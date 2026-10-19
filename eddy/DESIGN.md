@@ -130,7 +130,7 @@ Orca talks to Stably/Orca services. Our builds must make a deliberate choice for
 
 ## 11. What's next (trial plan)
 
-1. ~~**T0 — Fork setup**~~ — done 10-19: clone, `upstream` remote, `main` on `upstream/v1.4.230`, docs, version file, workflow-disable script. Pending: create the GitHub repo and do the first push (`eddy/AGENTS.md` "First push").
+1. ~~**T0 — Fork setup**~~ — done 10-19: clone, `upstream` remote, `main` on `upstream/v1.4.230`, docs, version file, workflow-disable script; pushed to `Tom-from-6520/eddy-omega` (public). **GitHub Actions are disabled for the whole repo** until eddy workflows exist (then: enable + `disable-upstream-workflows.ps1`, needs `gh` signed in as Tom-from-6520).
 2. **T1 — Build and run from source** on the personal machine (`pnpm install --frozen-lockfile`, `pnpm dev`, `pnpm tc`, one test). Note every prerequisite in `eddy/AGENTS.md`.
 3. **T2 — Use upstream Orca for real work** for a few days. Write down what's missing compared to §3–4.
 4. **T3 — Working Context spike:** a context with two threads (one in a branch worktree, one in a read-only detached `main`), a context folder (folder workspace), and its layout restored on switch. **Measure the upstream files touched and hook lines added.** Answer: can panes from different workspaces be shown side by side?
@@ -169,3 +169,4 @@ eddy-omega decisions:
 | O4 | 10-19 | `eddyVersion` + `quality` live in `eddy/product.json` (not `package.json`: upstream rewrites its `version` line every release, so an adjacent field would conflict). Starts at `0.1.0` alpha. |
 | O5 | 10-19 | Design doc is committed (no internal details), unlike eddy's local-only doc. |
 | O6 | 10-19 | All upstream workflows disabled on GitHub via `eddy/scripts/disable-upstream-workflows.ps1`; upstream Dependabot config removed. No per-file copyright headers (Orca convention). |
+| O7 | 10-19 | Repo `Tom-from-6520/eddy-omega` (public) force-pushed over GitHub's initial LICENSE commit (Orca's MIT `LICENSE` kept). Actions stay disabled repo-wide until eddy has its own workflows. |
