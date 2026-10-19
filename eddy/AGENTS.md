@@ -41,14 +41,14 @@
 
 Orca has ~90 workflows (push/PR triggers, hourly scheduled builds, self-hosted runners, cloud deployments). None of them should run here.
 
-1. Make sure `gh` is signed in to the account that owns the repo (`gh auth status`, `gh auth switch`).
-2. Create an empty repo (no README/license). Before the first push, turn Actions off:
-   `gh api -X PUT repos/<owner>/eddy-omega/actions/permissions -F enabled=false`
-3. `git remote add origin https://<user>@github.com/<owner>/eddy-omega.git` (the user name in the URL pins Git Credential Manager to that account), then `git push -u origin main`.
-4. Turn Actions back on and disable every upstream workflow:
+1. Create an empty repo. Before the first push, turn Actions off: Settings → Actions → General → "Disable actions" (or `gh api -X PUT repos/<owner>/eddy-omega/actions/permissions -F enabled=false`).
+2. `git remote add origin https://<user>@github.com/<owner>/eddy-omega.git` (the user name in the URL pins Git Credential Manager to that account), then `git push -u origin main` (`--force` if GitHub created an initial commit; Orca's MIT `LICENSE` must stay as it is).
+3. Leave Actions off until eddy-omega has its own workflows. Then, with `gh` signed in to the account that owns the repo (`gh auth status`, `gh auth switch`), turn Actions on and immediately disable every upstream workflow:
    `gh api -X PUT repos/<owner>/eddy-omega/actions/permissions -F enabled=true`
    `pwsh eddy/scripts/disable-upstream-workflows.ps1 -Repo <owner>/eddy-omega`
    Only eddy-owned workflows (`.github/workflows/eddy-*.yml`) stay enabled.
+
+Done for `Tom-from-6520/eddy-omega` on 2026-10-19 (steps 1–2; Actions are off).
 
 ## Building locally
 
