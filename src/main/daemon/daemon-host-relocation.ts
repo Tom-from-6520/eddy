@@ -2,6 +2,7 @@ import { createHash, randomBytes } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync } from 'node:fs'
 import { join, win32 as winPath } from 'node:path'
 import { getAppEnvironment } from '../../shared/app-environment'
+import { EDDY_LOCAL_DATA_DIR_NAME, eddyAwareIdentity } from '../../shared/eddy/eddy-build'
 import {
   buildDaemonHostManifest,
   daemonHostFitsPathBudget,
@@ -78,7 +79,8 @@ function currentBuildFingerprint(
 }
 
 // LOCAL appData (not roaming) so OneDrive/roaming never syncs this ~260MB runtime. Shared with NSIS uninstall (config/nsis/orca-installer-hooks.nsh) — keep in sync.
-const LOCAL_HOST_ROOT_NAME = 'Orca'
+// eddy: eddy omega keeps its own folder (eddy/nsis/eddy-installer-hooks.nsh).
+const LOCAL_HOST_ROOT_NAME = eddyAwareIdentity('Orca', EDDY_LOCAL_DATA_DIR_NAME)
 
 // Mirror getDaemonEntryPath()'s resolution order so the copied entry is the exact file the in-dir fork would run.
 function resolveEntrySourcePath(resourcesPath: string, observedEntryPath?: string): string {
