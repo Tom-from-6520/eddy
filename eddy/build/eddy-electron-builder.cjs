@@ -7,7 +7,7 @@ const { dirname, join } = require('node:path')
 const EDDY_APP_ID = 'dev.eddy.omega'
 // File- and path-safe name: install folder, %APPDATA% folder, Linux /opt folder and WM_CLASS.
 const EDDY_PRODUCT_NAME = 'eddy-omega'
-const EDDY_DISPLAY_NAME = 'eddy omega'
+const EDDY_DISPLAY_NAME = 'eddy'
 const EDDY_RELEASE_OWNER = 'Tom-from-6520'
 const EDDY_RELEASE_REPO = 'eddy-omega'
 

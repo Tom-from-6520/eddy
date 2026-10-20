@@ -63,7 +63,7 @@ describe('eddy electron-builder config', () => {
       eddyVersion: '0.1.3'
     })
     assert.equal(config.nsis.artifactName, 'eddy-omega-0.1.3-windows-x64-setup.${ext}')
-    assert.equal(config.nsis.shortcutName, 'eddy omega')
+    assert.equal(config.nsis.shortcutName, 'eddy')
     assert.equal(config.nsis.createDesktopShortcut, 'always')
     assert.equal(config.appImage.artifactName, 'eddy-omega-0.1.3-linux-x86_64.${ext}')
     assert.equal(config.deb.artifactName, 'eddy-omega-0.1.3-linux-amd64.${ext}')
