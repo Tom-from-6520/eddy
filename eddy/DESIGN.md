@@ -99,14 +99,25 @@ Details and commands: [`eddy/AGENTS.md`](./AGENTS.md).
 
 ## 8. Versions, releases, updates
 
-- **Version:** `eddyVersion` in `eddy/product.json` — **0.1.x = alpha, 0.2.x = beta, 1.x = stable**; bump the patch for each release; tags `v<eddyVersion>`. `quality` names the stage and update channel.
-- **`package.json` `version` stays Orca's.** Orca uses it for compatibility with remote/mobile peers (`minCompatibleDesktopVersion`), CLI stamping, crash reports and the updater. eddyVersion is kept in its own file because upstream's release commit rewrites the `version` line every release.
-- **Updater (not built).** Orca's updater (`src/main/updater/`) uses electron-updater with a generic feed: `updater-release-feed.ts` lists newer **release tags of `stablyai/orca`** by semver against `app.getVersion()`, pins the feed to that tag's assets, and electron-updater then requires the release manifest (`latest.yml`) version to be **greater than** the app version. Two eddy releases on the same Orca base share the same app version, so this can't detect them as-is. **Spike U1** picks one:
-  - (a) Compare by `eddyVersion`: point the release-feed lookup at eddy-omega's releases and its `v0.x` tags, write `eddyVersion` into the published `latest*.yml`, and give electron-updater `eddyVersion` as the current version. One seam in `updater-release-feed.ts` + the release workflow.
-  - (b) eddy's approach: a static per-quality/per-platform JSON feed on a GitHub release, compared by commit.
-- **Platforms first:** Windows x64 (NSIS installer) and Linux x64. macOS needs an Apple Developer account and notarization; later, if ever.
-- **Signing:** Orca signs Windows builds via SignPath Foundation (`config/scripts/windows-uninstaller-signing.cjs`, `signtoolOptions` in `config/electron-builder.config.cjs`). eddy-omega needs its own SignPath (OSS) project or its own certificate; until then builds are unsigned (SmartScreen warns).
-- **Branding (needed before installing next to Orca):** `appId` `com.stablyai.orca`, `productName` `Orca`, executable names (`Orca`, `orca-ide`), the `orca` CLI, the `~/.orca` data folder, artifact names, `publish` owner/repo (`config/electron-builder.config.cjs`, `config/dev-app-update.yml`), the hard-coded `stablyai/orca` feed URL in `updater-release-feed.ts`. Name: Q-N1.
+- **Version:** `eddyVersion` in `eddy/product.json` — **0.1.x = alpha, 0.2.x = beta, 1.x = stable**; bump the patch for each release; tags `v<eddyVersion>`. `quality` names the stage.
+- **`package.json` `version` stays Orca's.** Orca uses it for compatibility with remote/mobile peers (`minCompatibleDesktopVersion`), CLI stamping and crash reports. eddyVersion is kept in its own file because upstream's release commit rewrites the `version` line every release.
+- **eddy release builds.** Everything eddy-specific at runtime switches on a compile-time constant: `EDDY_RELEASE_BUILD=1` → electron-vite defines `EDDY_VERSION` (`eddy/build/eddy-vite-defines.mjs`) → `src/shared/eddy/eddy-build.ts`. Dev runs, tests and plain Orca builds keep Orca's behavior, so upstream's own tests keep passing. The eddy packaging config refuses to run without the flag, so an eddy-named installer can't ship with Orca's updater.
+- **Updater (Spike U1 → option (a), built 10-19).** Orca's updater (`src/main/updater/`) lists newer release tags from the GitHub atom feed (`updater-prerelease-feed.ts`), pins electron-updater's generic feed to that tag, and electron-updater installs only a `latest*.yml` whose version is greater than its current version. In eddy release builds:
+  - every channel's repo, the atom feed and the fallback feed are `Tom-from-6520/eddy-omega` (`release-channel.ts`, `updater-prerelease-feed.ts`, `updater-setup.ts`, `updater-release-feed.ts`);
+  - version comparisons use `eddyVersion` (`getUpdaterAppVersion()` in `updater-release-feed.ts`, `updater-events.ts`, `updater-install-support.ts`), and electron-updater's own current version is replaced with `eddyVersion` when it loads (`electron-updater-loader.ts` → `src/main/eddy/eddy-updater-version.ts`);
+  - the release workflow writes `eddyVersion` into `latest.yml` / `latest-linux.yml` (`eddy/build/eddy-update-manifest.cjs`);
+  - Orca's changelog (keyed to Orca versions) and update nudges are off.
+  - Releases are full GitHub releases, not pre-releases: the updater's fallback reads `/releases/latest`, which skips pre-releases.
+  - Not adapted: the hidden build picker (Alt-click on the release channel) still checks profile compatibility against Orca's version.
+- **Platforms:** Windows x64 (NSIS installer, self-updating) and Linux x64 (AppImage, self-updating; `.deb`). macOS needs an Apple Developer account and notarization; later, if ever.
+- **Signing:** Orca signs Windows builds via SignPath Foundation. eddy builds are unsigned (SmartScreen warns); the packaging drops Orca's `publisherName` so electron-updater doesn't reject unsigned eddy installers. Later: eddy's own SignPath (OSS) project or certificate, then restore a `publisherName`.
+- **Identity (Q-N1 decided 10-19: "eddy omega").** App id `dev.eddy.omega`; name `eddy-omega` (install folder, Electron data folder `%APPDATA%\eddy-omega`, `/opt/eddy-omega`, Linux WM class); display name "eddy omega" (shortcuts, Start menu, desktop entry, window/app name); `%LOCALAPPDATA%\eddy-omega` for the relocated terminal daemon; `/usr/bin/eddy-omega`; own document ProgIDs; protocol `eddy-omega://`. Implemented in `eddy/build/eddy-electron-builder.cjs` (wraps Orca's electron-builder config), `eddy/nsis/eddy-installer-hooks.nsh`, `eddy/linux/after-*.sh`, and hooks in `dev-instance-identity.ts` and `daemon-host-relocation.ts`.
+- **Still shared with Orca** (fine unless both are installed and used on one machine):
+  - `~/.orca`: agent-hook scripts, some credential files, keybindings. Hard-coded in ~45 upstream files; separating it is many hooks (Q-I1).
+  - Agent CLIs' hook registrations (e.g. Claude settings) point at `~/.orca/agent-hooks`; two Orca-family apps would fight over them.
+  - Executable names: `Orca.exe` on Windows (Orca's Rust CLI launcher looks for it), `orca-ide` on Linux, the `orca` / `orca-ide` CLI commands.
+  - The eddy uninstaller doesn't kill a running eddy terminal daemon (Orca's kills by image name, which would also hit Orca's); a leftover `%LOCALAPPDATA%\eddy-omega` may remain.
+  - `orca://` deep links in app code; Orca's `agent-state-rules` live update still reads Orca's releases (data, harmless).
 
 ## 9. Orca services to review
 
@@ -116,9 +127,9 @@ Orca talks to Stably/Orca services. Our builds must make a deliberate choice for
 |---|---|---|
 | Telemetry (PostHog) | `src/main/telemetry/` | **Off**: only sends when CI injects `ORCA_POSTHOG_WRITE_KEY` + build identity. Never inject it. |
 | Feedback, crash reports | `FEEDBACK_API_URL` (`www.onorca.dev/v1/feedback`) in `src/main/ipc/feedback-request.ts`; crash reports are submitted through it (`crash-reporting-submission.ts`) | Goes to Orca's servers. Disable or redirect (Q-S2). |
-| Update nudges, "star" prompt | `src/main/updater/updater-nudge.ts`, `src/main/star-nag/` | Upstream-specific; disable. |
+| Update nudges, "star" prompt | `src/main/updater-nudge.ts`, `src/main/star-nag/` | Nudges **off** in eddy release builds; star prompt still Orca's (Q-S2). |
 | Mobile relay, push, login, share links | `relay*.onorca.dev`, `push.onorca.dev`, `login.onorca.dev`, `share.onorca.dev` | Orca's cloud. Keep using as a normal user, or hide (Q-S2). |
-| Update feed | `github.com/stablyai/orca/releases` | **Must** point to eddy-omega (§8), or a fork build would "update" itself to upstream Orca. |
+| Update feed, changelog | `github.com/stablyai/orca/releases`, `onorca.dev/whats-new/changelog.json` | **eddy-omega's releases** in eddy release builds (§8); Orca's changelog off. |
 
 ## 10. Security and supply chain
 
@@ -130,19 +141,25 @@ Orca talks to Stably/Orca services. Our builds must make a deliberate choice for
 
 ## 11. What's next (trial plan)
 
-1. ~~**T0 — Fork setup**~~ — done 10-19: clone, `upstream` remote, `main` on `upstream/v1.4.230`, docs, version file, workflow-disable script; pushed to `Tom-from-6520/eddy-omega` (public). **GitHub Actions are disabled for the whole repo** until eddy workflows exist (then: enable + `disable-upstream-workflows.ps1`, needs `gh` signed in as Tom-from-6520).
-2. **T1 — Build and run from source** on the personal machine (`pnpm install --frozen-lockfile`, `pnpm dev`, `pnpm tc`, one test). Note every prerequisite in `eddy/AGENTS.md`.
-3. **T2 — Use upstream Orca for real work** for a few days. Write down what's missing compared to §3–4.
-4. **T3 — Working Context spike:** a context with two threads (one in a branch worktree, one in a read-only detached `main`), a context folder (folder workspace), and its layout restored on switch. **Measure the upstream files touched and hook lines added.** Answer: can panes from different workspaces be shown side by side?
-5. **W3 — Copilot CLI as an ACP native chat** (§6).
-6. **T4 — Decide:** continue eddy-omega or return to eddy. Pass if T3 needs only small hooks in upstream files, the chat is good enough, and one upstream sync goes through without major conflicts.
-7. If continuing: branding (Q-N1), services (§9), release workflow (`eddy-build.yml`, `eddy-checks.yml`), updater (Spike U1), signing.
+1. ~~**T0 — Fork setup**~~ — done 10-19: clone, `upstream` remote, `main` on `upstream/v1.4.230`, docs, version file, workflow-disable script; pushed to `Tom-from-6520/eddy-omega` (public).
+2. ~~**CI/CD**~~ — 10-19: `eddy-checks.yml`, `eddy-build.yml`, eddy omega identity and updater (§8). Actions enabled with every upstream workflow disabled. See §11a for verification status.
+3. **T1 — Build and run from source** on the personal machine (`pnpm install --frozen-lockfile`, `pnpm dev`, `pnpm tc`, one test). Note every prerequisite in `eddy/AGENTS.md`.
+4. **T2 — Use eddy omega (or upstream Orca) for real work** for a few days. Write down what's missing compared to §3–4.
+5. **T3 — Working Context spike:** a context with two threads (one in a branch worktree, one in a read-only detached `main`), a context folder (folder workspace), and its layout restored on switch. **Measure the upstream files touched and hook lines added.** Answer: can panes from different workspaces be shown side by side?
+6. **W3 — Copilot CLI as an ACP native chat** (§6).
+7. **T4 — Decide:** continue eddy-omega or return to eddy. Pass if T3 needs only small hooks in upstream files, the chat is good enough, and one upstream sync goes through without major conflicts.
+8. If continuing: services (§9), separate `~/.orca` (Q-I1), signing, show `eddyVersion` in Settings/About.
+
+### 11a. Verification status (CI/CD)
+- Local: eddy build-script tests (`node --test`), `oxlint` and `oxfmt` on the changed files. Type-check and vitest run only in CI (this machine can't install Orca's dependencies).
+- CI and the first real release/update: see the latest `eddy-checks` / `eddy-build` runs. **Not yet verified by hand: installing a release and updating to the next one.**
 
 ## 12. Open questions
 
-- **Q-N1** Product name and identity: "eddy" (clashes with the installed VS Code-based eddy: name, `.eddy` folder) or a distinct name; app id, data folder, CLI name.
-- **Q-U1** Updater: compare by `eddyVersion` (8a) or static feed (8b).
-- **Q-S2** Which Orca cloud services to keep, hide or disable (feedback, crash reports, mobile relay, share links, login).
+- ~~**Q-N1**~~ Decided 10-19: "eddy omega" (§8).
+- ~~**Q-U1**~~ Decided 10-19: compare by `eddyVersion` (§8).
+- **Q-I1** Separate `~/.orca` (and agent-hook registrations, CLI names) from Orca, so both can be used on one machine? ~45 upstream files.
+- **Q-S2** Which Orca cloud services to keep, hide or disable (feedback, crash reports, mobile relay, share links, login, star prompt).
 - **Q-L1** Can a context layout show panes from several workspaces at once, or does it switch between workspaces? (T3)
 - **Q-UI1** Placement of MCP/skills/explorer/git.
 - **Q8** MCP source of truth: eddy catalog vs. per-agent config.
@@ -170,3 +187,6 @@ eddy-omega decisions:
 | O5 | 10-19 | Design doc is committed (no internal details), unlike eddy's local-only doc. |
 | O6 | 10-19 | All upstream workflows disabled on GitHub via `eddy/scripts/disable-upstream-workflows.ps1`; upstream Dependabot config removed. No per-file copyright headers (Orca convention). |
 | O7 | 10-19 | Repo `Tom-from-6520/eddy-omega` (public) force-pushed over GitHub's initial LICENSE commit (Orca's MIT `LICENSE` kept). Actions stay disabled repo-wide until eddy has its own workflows. |
+| O8 | 10-19 | CI/CD like eddy: `eddy-checks.yml` (type-check, lint/format changed files, eddy tests + tests next to hooked files + updater tests) and `eddy-build.yml` (tag `v<eddyVersion>` → Windows x64 NSIS + Linux x64 AppImage/.deb, GitHub release with `SHA256SUMS.txt`). Actions pinned by SHA; Actions enabled with all upstream workflows disabled. |
+| O9 | 10-19 | Identity "eddy omega" (`dev.eddy.omega`, `eddy-omega` folders) and an updater on eddy-omega's releases compared by `eddyVersion`, all behind the compile-time `EDDY_VERSION` switch so dev/tests keep Orca's behavior (§8). `~/.orca`, exe and CLI names stay shared (Q-I1). |
+| O10 | 10-19 | Releases are full GitHub releases (not pre-releases), published from a draft, because the updater's fallback reads `/releases/latest`. |

@@ -48,23 +48,38 @@ Orca has ~90 workflows (push/PR triggers, hourly scheduled builds, self-hosted r
    `pwsh eddy/scripts/disable-upstream-workflows.ps1 -Repo <owner>/eddy-omega`
    Only eddy-owned workflows (`.github/workflows/eddy-*.yml`) stay enabled.
 
-Done for `Tom-from-6520/eddy-omega` on 2026-10-19 (steps 1–2; Actions are off).
+Done for `Tom-from-6520/eddy-omega` on 2026-10-19: pushed with Actions off, then Actions on with every upstream workflow disabled.
 
 ## Building locally
 
 - Prerequisites: Node 24, pnpm (exact version pinned by `packageManager` in `package.json`; use `corepack enable`), Bun (version in `config/.bun-version`, used by `pnpm test`). Native modules (`node-pty`, Windows process tree) build with node-gyp. Linux packaging needs Docker.
 - Install with `pnpm install --frozen-lockfile` (never `pnpm update` or an unfrozen install; dependency changes come from upstream syncs). Run with `pnpm dev`.
-- Verify: `pnpm tc` (type-check), `pnpm test <path>` (tests), `pnpm run check:code-quality:changed` (lint changed files), `pnpm format`.
+- Verify: `pnpm tc` (type-check), `pnpm test <path>` (tests), `pnpm run check:code-quality:changed` (lint changed files), `pnpm format`. eddy's own test set: `node --test "eddy/build/*.test.cjs"` and `pnpm run test:node $(node eddy/scripts/eddy-test-files.mjs)`.
 - Agent-launched app runs and tests use `ORCA_BACKGROUND_LAUNCH=1` (see Orca's `AGENTS.md`).
-- Packaging: `pnpm build:win`, `pnpm build:linux`, or `pnpm build:unpack` (unpacked app). Cross-architecture builds need `pnpm install:release` first.
+- Packaging: `pnpm build:win`, `pnpm build:linux`, or `pnpm build:unpack` build **Orca-branded** apps. An eddy omega package needs `EDDY_RELEASE_BUILD=1` for the whole build, then `pnpm build:release` and `pnpm exec electron-builder --config eddy/build/electron-builder.eddy.config.cjs --win` (or `--linux AppImage deb`); see `.github/workflows/eddy-build.yml`. Cross-architecture builds need `pnpm install:release` first.
 - Parallel work: one Git worktree per task, next to the main clone: `git worktree add -b <branch> ..\eddy-omega-worktrees\<name> main`. Each worktree needs its own `pnpm install --frozen-lockfile`. Remove it with `git worktree remove ..\eddy-omega-worktrees\<name>`.
 
 ## Versions
 
-- eddy-omega's own version is `eddyVersion` in [`eddy/product.json`](./product.json): **0.1.x = alpha, 0.2.x = beta, 1.x = stable**; bump the patch for each release. `quality` (`alpha`, `beta`, `stable`) names the stage and the update channel. Release tags are `v<eddyVersion>` (e.g. `v0.1.0`).
-- The `version` in `package.json` stays **Orca's** (e.g. `1.4.230`). Never change it: remote and mobile peers check it (`minCompatibleDesktopVersion`), the CLI is stamped with it, and the updater and crash reports use it.
+- eddy-omega's own version is `eddyVersion` in [`eddy/product.json`](./product.json): **0.1.x = alpha, 0.2.x = beta, 1.x = stable**; bump the patch for each release. `quality` (`alpha`, `beta`, `stable`) names the stage. Release tags are `v<eddyVersion>` (e.g. `v0.1.0`).
+- The `version` in `package.json` stays **Orca's** (e.g. `1.4.230`). Never change it: remote and mobile peers check it (`minCompatibleDesktopVersion`), the CLI is stamped with it, and crash reports use it. Only the updater uses `eddyVersion` (below).
 - `eddyVersion` lives in its own file because upstream's release commit rewrites the `version` line of `package.json` every release; a field next to it would conflict at every rebase.
-- The release pipeline and updater are not built yet (`DESIGN.md` §8).
+
+## eddy release builds (identity and updater)
+
+eddy omega differs from Orca only in **release builds**: `EDDY_RELEASE_BUILD=1` makes electron-vite define `EDDY_VERSION` (`eddy/build/eddy-vite-defines.mjs`), which `src/shared/eddy/eddy-build.ts` reads. Dev runs, tests and plain `pnpm build:*` keep Orca's behavior, so upstream tests stay valid.
+
+- **Identity:** app id `dev.eddy.omega`, name `eddy-omega` (install folder, `%APPDATA%\eddy-omega`, `/opt/eddy-omega`), display name "eddy omega", `%LOCALAPPDATA%\eddy-omega` for the relocated terminal daemon, `/usr/bin/eddy-omega` on Linux. Packaging: `eddy/build/eddy-electron-builder.cjs` (applied to Orca's config by `electron-builder.eddy.config.cjs`, which refuses to run without `EDDY_RELEASE_BUILD=1`), `eddy/nsis/eddy-installer-hooks.nsh`, `eddy/linux/after-*.sh` (copies of Orca's; re-check them after upstream syncs).
+- **Updater:** reads `Tom-from-6520/eddy-omega` releases for every channel and compares `eddyVersion`: the release tags (`v0.x`), electron-updater's current version (`src/main/eddy/eddy-updater-version.ts`), and the `version` in the published `latest.yml` / `latest-linux.yml` (`eddy/build/eddy-update-manifest.cjs`). Orca's changelog and update nudges are off.
+- Hooks in upstream files are marked `eddy:` (`git grep -n "eddy:" -- src electron.vite.config.ts`).
+
+## CI/CD
+
+- **`eddy-checks.yml`** (push and pull request to `main`): type-check, `oxlint` + `oxfmt --check` on changed files, eddy's build-script tests, and the unit tests from `eddy/scripts/eddy-test-files.mjs` (eddy-owned tests, the tests next to every file with an `eddy:` hook, the updater tests).
+- **`eddy-build.yml`**: a `v<eddyVersion>` tag builds Windows x64 (NSIS installer, self-updating) and Linux x64 (AppImage, self-updating; `.deb`) and publishes a GitHub release with `SHA256SUMS.txt`. Run it manually (Actions → eddy build → Run workflow) to build without releasing; installers stay as run artifacts for 14 days.
+- **Release:** set `eddyVersion` in `eddy/product.json`, commit ("Release 0.1.1"), push, then `git tag v0.1.1; git push origin v0.1.1`. The workflow checks the tag matches `eddyVersion`.
+- Releases are **full releases, not pre-releases** (the updater's fallback reads `/releases/latest`, which skips pre-releases); the stage is in the title. Publishing creates a draft first, then publishes it, so installed builds never see a half-uploaded release.
+- Publishing uses `secrets.EDDY_RELEASE_TOKEN` if set (fine-grained, Contents: read and write on this repo), else the built-in token.
 
 ## Supply chain
 
@@ -75,5 +90,5 @@ Done for `Tom-from-6520/eddy-omega` on 2026-10-19 (steps 1–2; Actions are off)
 
 ## Pushing
 
-- Git identity for this repo: a GitHub noreply address (`git config user.name/user.email` in the clone).
+- Git identity for this repo: a GitHub noreply address (`git config user.name/user.email` in the clone). Use `core.autocrlf input` so files stay LF like Orca's.
 - Orca uses no Git LFS (unlike VS Code), so plain `git push` works. Never push with `--no-verify`.
