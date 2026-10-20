@@ -1,12 +1,22 @@
 'use strict'
 // Run with: node --test "eddy/build/*.test.cjs"
 const assert = require('node:assert/strict')
-const { join } = require('node:path')
+const {
+  existsSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync
+} = require('node:fs')
+const { tmpdir } = require('node:os')
+const { basename, join } = require('node:path')
 const { describe, it } = require('node:test')
 const {
   eddyArtifactNames,
   eddyElectronBuilderConfig,
-  readEddyVersion
+  readEddyVersion,
+  withOrcaAppImageName
 } = require('./eddy-electron-builder.cjs')
 
 const root = join(__dirname, '..', '..')
@@ -88,6 +98,30 @@ describe('eddy electron-builder config', () => {
       linuxAppImage: 'eddy-omega-0.2.0-linux-x86_64.AppImage',
       linuxDeb: 'eddy-omega-0.2.0-linux-amd64.deb'
     })
+  })
+
+  it("runs Orca's AppImage check on a link with Orca's file name, then removes it", () => {
+    const dir = mkdtempSync(join(tmpdir(), 'eddy-appimage-test-'))
+    try {
+      const file = join(dir, 'eddy-omega-0.1.0-linux-x86_64.AppImage')
+      writeFileSync(file, 'appimage-bytes')
+      const seen = []
+      const hook = withOrcaAppImageName((context) => {
+        seen.push({
+          ...context,
+          bytes: existsSync(context.file) ? readFileSync(context.file, 'utf8') : null
+        })
+      })
+      hook({ file, arch: 1 })
+      hook({ file: join(dir, 'eddy-omega-0.1.0-linux-amd64.deb'), arch: 1 })
+      assert.equal(basename(seen[0].file), 'orca-linux.AppImage')
+      assert.equal(seen[0].bytes, 'appimage-bytes')
+      assert.equal(existsSync(seen[0].file), false)
+      assert.equal(basename(seen[1].file), 'eddy-omega-0.1.0-linux-amd64.deb')
+      assert.deepEqual(readdirSync(dir), ['eddy-omega-0.1.0-linux-x86_64.AppImage'])
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
   })
 
   it('reads a valid eddyVersion from eddy/product.json', () => {

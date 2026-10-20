@@ -1,8 +1,8 @@
 'use strict'
 // eddy omega packaging: Orca's electron-builder config with eddy omega's identity, artifact
 // names and release repo. Applied by eddy/build/electron-builder.eddy.config.cjs.
-const { readFileSync } = require('node:fs')
-const { join } = require('node:path')
+const { linkSync, mkdtempSync, readFileSync, rmSync } = require('node:fs')
+const { dirname, join } = require('node:path')
 
 const EDDY_APP_ID = 'dev.eddy.omega'
 // File- and path-safe name: install folder, %APPDATA% folder, Linux /opt folder and WM_CLASS.
@@ -28,6 +28,38 @@ function eddyArtifactNames(eddyVersion) {
   }
 }
 
+// electron-builder passes its Arch enum (1 = x64, 3 = arm64); accept names too.
+const ORCA_APPIMAGE_NAME_BY_ARCH = new Map([
+  [1, 'orca-linux.AppImage'],
+  ['x64', 'orca-linux.AppImage'],
+  [3, 'orca-linux-arm64.AppImage'],
+  ['arm64', 'orca-linux-arm64.AppImage']
+])
+
+/**
+ * Orca's artifactBuildCompleted hook verifies an AppImage (static runtime, architecture) but
+ * only accepts Orca's file names. Run it on a hard link with Orca's name next to the artifact.
+ */
+function withOrcaAppImageName(baseHook) {
+  if (typeof baseHook !== 'function') {
+    return baseHook
+  }
+  return (context) => {
+    const orcaName = ORCA_APPIMAGE_NAME_BY_ARCH.get(context.arch)
+    if (!context.file.endsWith('.AppImage') || !orcaName) {
+      return baseHook(context)
+    }
+    const aliasDir = mkdtempSync(join(dirname(context.file), '.eddy-appimage-check-'))
+    try {
+      const alias = join(aliasDir, orcaName)
+      linkSync(context.file, alias)
+      return baseHook({ ...context, file: alias })
+    } finally {
+      rmSync(aliasDir, { recursive: true, force: true })
+    }
+  }
+}
+
 function eddyElectronBuilderConfig(base, { eddyVersion, env, eddyDir }) {
   // Why: the identity below only makes sense with the eddy updater/identity switches compiled
   // in (EDDY_VERSION). Without them an eddy-named build would update itself from upstream Orca.
@@ -43,6 +75,7 @@ function eddyElectronBuilderConfig(base, { eddyVersion, env, eddyDir }) {
     appId: EDDY_APP_ID,
     productName: EDDY_PRODUCT_NAME,
     protocols: [{ name: EDDY_DISPLAY_NAME, schemes: ['eddy-omega'] }],
+    artifactBuildCompleted: withOrcaAppImageName(base.artifactBuildCompleted),
     extraMetadata: {
       ...base.extraMetadata,
       name: EDDY_PRODUCT_NAME,
@@ -96,5 +129,6 @@ module.exports = {
   EDDY_PRODUCT_NAME,
   eddyArtifactNames,
   eddyElectronBuilderConfig,
-  readEddyVersion
+  readEddyVersion,
+  withOrcaAppImageName
 }
