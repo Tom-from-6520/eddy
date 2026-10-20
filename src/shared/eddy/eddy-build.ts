@@ -35,6 +35,12 @@ export function eddyAwareIdentity(upstreamValue: string, eddyValue: string): str
 /** eddy's update campaigns (format in eddy/AGENTS.md); no file means no campaign. */
 export const EDDY_UPDATE_NUDGE_URL = `https://raw.githubusercontent.com/${EDDY_RELEASE_REPO}/main/eddy/update-nudge.json`
 
+/** Per-user home folder: `~/.orca`, or `~/.eddy` in eddy release builds. */
+export const APP_HOME_DIR_NAME = eddyAwareIdentity('.orca', '.eddy')
+
+/** Per-repo folder (drops, templates, issue command, downloads): `.orca/`, or `.eddy/`. */
+export const REPO_DATA_DIR_NAME = eddyAwareIdentity('.orca', '.eddy')
+
 /** The version people see: "0.1.1 alpha (Orca 1.4.230)" in an eddy build, else Orca's version. */
 export function eddyVersionLabel(
   orcaVersion: string,

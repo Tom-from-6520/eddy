@@ -5,8 +5,9 @@ import { readRuntimeDirectory } from '@/runtime/runtime-file-mutation-client'
 import { readRuntimeFileContent } from '@/runtime/runtime-file-read-client'
 import { runtimePathExists } from '@/runtime/runtime-file-metadata-client'
 import { basename, joinPath, normalizeRelativePath } from './path'
+import { REPO_DATA_DIR_NAME } from '../../../shared/eddy/eddy-build' // eddy: .eddy/ in eddy release builds
 
-const MARKDOWN_TEMPLATE_ROOT = '.orca/templates'
+const MARKDOWN_TEMPLATE_ROOT = `${REPO_DATA_DIR_NAME}/templates`
 const MARKDOWN_TEMPLATE_MAX_DEPTH = 8
 const MARKDOWN_TEMPLATE_MAX_COUNT = 100
 

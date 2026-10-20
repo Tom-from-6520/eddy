@@ -23,6 +23,7 @@ import { API_KEY_ENVELOPE_PREFIX, getZcodePlanApiKeyPath } from '../zcode/zcode-
 import { COOKIE_ENVELOPE_PREFIX, getMiniMaxCookiePath } from '../minimax/minimax-cookie-store'
 import { miniMaxApiKeyEnvelopeFile } from '../minimax/minimax-api-key-store'
 import { openCodeGoApiKeyEnvelopeFile } from '../opencode/opencode-go-api-key-store'
+import { APP_HOME_DIR_NAME } from '../../shared/eddy/eddy-build' // eddy: ~/.eddy in eddy release builds
 
 export type PlaintextCredentialTarget = {
   path: string
@@ -46,7 +47,7 @@ function encFilesIn(dir: string): string[] {
 
 /** Where every integration store keeps its files, whatever ORCA_USER_DATA says. */
 export function orcadCredentialRoot(): string {
-  return join(homedir(), '.orca')
+  return join(homedir(), APP_HOME_DIR_NAME)
 }
 
 export function listPlaintextCredentialTargets(): PlaintextCredentialTarget[] {

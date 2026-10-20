@@ -4,10 +4,11 @@ import { join } from 'node:path'
 import { loadHooks } from './hooks'
 import type { GitRuntimeOptions } from './git/git-runtime-options'
 import { checkIgnoredPaths } from './git/check-ignored-paths'
+import { REPO_DATA_DIR_NAME } from '../shared/eddy/eddy-build' // eddy: .eddy/ in eddy release builds
 
 type IssueCommandGitOptions = GitRuntimeOptions | (() => GitRuntimeOptions)
 
-const ORCA_DIR = '.orca'
+const ORCA_DIR = REPO_DATA_DIR_NAME
 const ISSUE_COMMAND_FILENAME = 'issue-command'
 
 export function getIssueCommandFilePath(repoPath: string): string {
@@ -113,15 +114,15 @@ function ensureOrcaDirIgnored(repoPath: string): void {
   try {
     if (existsSync(gitignorePath)) {
       const content = readFileSync(gitignorePath, 'utf-8')
-      if (/^\.orca\/?$/m.test(content)) {
+      if (new RegExp(`^\\${ORCA_DIR}\\/?$`, 'm').test(content)) {
         return
       }
       const separator = content.endsWith('\n') ? '' : '\n'
-      writeFileSync(gitignorePath, `${content}${separator}.orca\n`, 'utf-8')
+      writeFileSync(gitignorePath, `${content}${separator}${ORCA_DIR}\n`, 'utf-8')
     } else {
-      writeFileSync(gitignorePath, '.orca\n', 'utf-8')
+      writeFileSync(gitignorePath, `${ORCA_DIR}\n`, 'utf-8')
     }
   } catch {
-    console.warn('[hooks] Could not update .gitignore to exclude .orca')
+    console.warn(`[hooks] Could not update .gitignore to exclude ${ORCA_DIR}`)
   }
 }

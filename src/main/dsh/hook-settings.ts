@@ -9,6 +9,7 @@ import {
 } from '../agent-hooks/installer-utils'
 import { wrapWindowsBatchHookCommand } from '../agent-hooks/windows-direct-cmd-hook-command'
 import { readManagedHookEventsFromJson } from '../agent-hooks/managed-hooks-json-events'
+import { APP_HOME_DIR_NAME } from '../../shared/eddy/eddy-build' // eddy: ~/.eddy in eddy release builds
 
 const DSH_SCRIPT_BASE = 'dsh-hook'
 
@@ -66,7 +67,7 @@ export function getDshManagedHooksPath(): string {
 export function getDshRemoteManagedHooksPath(remoteHome: string): string {
   return pathPosix.join(
     remoteHome.replace(/\/$/, ''),
-    '.orca',
+    APP_HOME_DIR_NAME,
     'agent-hooks',
     DSH_MANAGED_HOOKS_FILE_NAME
   )

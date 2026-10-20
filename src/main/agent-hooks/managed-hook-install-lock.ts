@@ -14,6 +14,7 @@ import {
   readManagedHookHostIdentity,
   readManagedHookProcessIdentity
 } from './managed-hook-owner-identity'
+import { APP_HOME_DIR_NAME } from '../../shared/eddy/eddy-build' // eddy: ~/.eddy in eddy release builds
 
 const LOCK_WAIT_TIMEOUT_MS = 10_000
 const LOCK_RETRY_MS = 20
@@ -49,7 +50,7 @@ async function acquireInstallLock(
   suppliedHostIdentity?: string,
   waitTimeoutMs = LOCK_WAIT_TIMEOUT_MS
 ): Promise<() => Promise<void>> {
-  const lockParent = join(home, '.orca')
+  const lockParent = join(home, APP_HOME_DIR_NAME)
   const lockPath = join(lockParent, 'managed-hook-install.lock')
   await mkdir(lockParent, { recursive: true })
   const hostIdentity = suppliedHostIdentity ?? (await readManagedHookHostIdentity())
