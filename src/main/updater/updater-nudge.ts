@@ -1,6 +1,7 @@
 import { app } from 'electron'
 import { is } from '@electron-toolkit/utils'
 import { fetchNudge, shouldApplyNudge } from '../updater-nudge'
+import { getUpdaterAppVersion } from '../eddy/eddy-updater-version'
 import { NUDGE_ACTIVATION_COOLDOWN_MS, NUDGE_POLL_INTERVAL_MS } from './updater-state'
 import { UpdaterBuildSelection } from './updater-build-selection'
 
@@ -27,7 +28,7 @@ export abstract class UpdaterNudge extends UpdaterBuildSelection {
       if (this.currentStatus.state === 'checking' || this.currentStatus.state === 'downloading') {
         return
       }
-      const appVersion = app.getVersion()
+      const appVersion = getUpdaterAppVersion() // eddy: eddyVersion in eddy release builds
       const pendingUpdateNudgeId = this._getPendingUpdateNudgeId?.() ?? null
       const dismissedUpdateNudgeId = this._getDismissedUpdateNudgeId?.() ?? null
       if (

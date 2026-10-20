@@ -13,6 +13,7 @@ import { SetupGuideSidebarEntry } from './SetupGuideSidebarEntry'
 import { SidebarTaskNavButton } from './SidebarTaskNavButton'
 import { HideSidebarMenu } from './sidebar-nav-controls'
 import { translate } from '@/i18n/i18n'
+import { ORCA_FEATURE_DISABLED, orcaFeatureLabel } from '@/eddy/orca-feature'
 import { lazyWithRetry } from '@/lib/lazy-with-retry'
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 
@@ -229,6 +230,9 @@ const SidebarNav = React.memo(function SidebarNav() {
                   openMobilePage()
                 }}
                 aria-current={mobileActive ? 'page' : undefined}
+                // eddy: Orca Mobile uses Orca's relay; disabled in eddy release builds.
+                disabled={ORCA_FEATURE_DISABLED}
+                title={ORCA_FEATURE_DISABLED ? orcaFeatureLabel('Orca Mobile') : undefined}
                 className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-left"
               >
                 <Smartphone
@@ -239,7 +243,9 @@ const SidebarNav = React.memo(function SidebarNav() {
                   strokeWidth={mobileActive ? 2.25 : 1.75}
                 />
                 <span className="min-w-0 flex-1 truncate">
-                  {translate('auto.components.sidebar.SidebarNav.1b5c41caee', 'Orca Mobile')}
+                  {orcaFeatureLabel(
+                    translate('auto.components.sidebar.SidebarNav.1b5c41caee', 'Orca Mobile')
+                  )}
                 </span>
                 {mobileOnboardingBadge.visible ? (
                   <span className="shrink-0 rounded-full bg-primary px-1.5 py-px text-[10px] font-semibold text-primary-foreground">
