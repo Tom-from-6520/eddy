@@ -1,0 +1,244 @@
+# eddy omega release pipeline.
+# - Set `eddyVersion` in eddy/product.json (e.g. 0.1.1), commit, then push the tag `v<eddyVersion>`
+#   (e.g. v0.1.1) -> build Windows x64 + Linux x64 and publish a GitHub release. Installed eddy
+#   omega builds update from it (latest.yml / latest-linux.yml carry eddyVersion).
+#   Versions: 0.1.x = alpha, 0.2.x = beta, 1.x = stable.
+# - Run manually (Actions -> eddy build -> Run workflow) -> build only; installers are kept as run
+#   artifacts for 14 days.
+# Releases are full releases, not pre-releases: the updater falls back to /releases/latest, which
+# ignores pre-releases. The stage is in the title and `quality` in eddy/product.json.
+name: eddy build
+
+on:
+  push:
+    tags: ['v[0-9]+.[0-9]+.[0-9]+']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: eddy-build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Compiles eddy omega's identity and updater switches in (src/shared/eddy/eddy-build.ts) and
+  # unlocks eddy/build/electron-builder.eddy.config.cjs.
+  EDDY_RELEASE_BUILD: '1'
+  NODE_OPTIONS: --max-old-space-size=6144
+
+jobs:
+  label:
+    name: Version label
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.label.outputs.version }}
+      label: ${{ steps.label.outputs.label }}
+      quality: ${{ steps.label.outputs.quality }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - id: label
+        run: |
+          version=$(node -p "require('./eddy/product.json').eddyVersion")
+          quality=$(node -p "require('./eddy/product.json').quality")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "quality=$quality" >> "$GITHUB_OUTPUT"
+          if [ "$GITHUB_REF_TYPE" = tag ]; then
+            if [ "${GITHUB_REF_NAME#v}" != "$version" ]; then
+              echo "::error::Tag $GITHUB_REF_NAME doesn't match eddyVersion $version in eddy/product.json"
+              exit 1
+            fi
+            echo "label=$version" >> "$GITHUB_OUTPUT"
+          else
+            echo "label=$version-dev.$(git rev-parse --short=10 HEAD)" >> "$GITHUB_OUTPUT"
+          fi
+
+  windows-x64:
+    name: Windows x64
+    needs: label
+    # Same image as Orca's release builds (node-gyp and VS 2026 on windows-latest).
+    runs-on: windows-2022
+    timeout-minutes: 120
+    env:
+      VERSION: ${{ needs.label.outputs.version }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/setup@84cb39b217b10273981911c288cd62326dc7c6d2 # v2.0.2
+        with:
+          install: false
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version-file: package.json
+          cache: pnpm
+          cache-dependency-path: |
+            pnpm-lock.yaml
+            mobile/pnpm-lock.yaml
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          for ($i = 1; $i -le 3; $i++) {
+            pnpm install --frozen-lockfile
+            if ($LASTEXITCODE -eq 0) { exit 0 }
+            Write-Host "pnpm install failed (attempt $i), retrying..."; Start-Sleep 30
+          }
+          exit 1
+
+      # electron-builder's beforePack needs the mobile web bundle, built from mobile/node_modules.
+      - uses: ./.github/actions/install-mobile-dependencies
+
+      - name: Build app
+        shell: bash
+        run: pnpm build:release
+
+      - name: Package installer
+        shell: pwsh
+        run: |
+          node config/scripts/ensure-native-runtime.mjs --runtime=electron
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          pnpm exec electron-builder --config eddy/build/electron-builder.eddy.config.cjs --win --publish never
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node eddy/build/eddy-update-manifest.cjs $env:VERSION dist/latest.yml
+
+      - name: Collect outputs
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory release | Out-Null
+          $setup = "eddy-omega-$env:VERSION-windows-x64-setup.exe"
+          foreach ($file in @($setup, "$setup.blockmap", 'latest.yml')) {
+            if (-not (Test-Path "dist/$file")) { throw "missing dist/$file" }
+            Copy-Item "dist/$file" release/
+          }
+          Get-ChildItem release | Format-Table Name, Length
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: windows-x64
+          path: release/*
+          retention-days: 14
+
+  linux-x64:
+    name: Linux x64
+    needs: label
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    env:
+      VERSION: ${{ needs.label.outputs.version }}
+    steps:
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/setup@84cb39b217b10273981911c288cd62326dc7c6d2 # v2.0.2
+        with:
+          install: false
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version-file: package.json
+          cache: pnpm
+          cache-dependency-path: |
+            pnpm-lock.yaml
+            mobile/pnpm-lock.yaml
+
+      # Same as Orca's Linux release build: pnpm's bundled node-gyp fails some native postinstalls.
+      - name: Use external node-gyp
+        run: |
+          npm install -g node-gyp@11.5.0
+          echo "npm_config_node_gyp=$(npm root -g)/node-gyp/bin/node-gyp.js" >> "$GITHUB_ENV"
+
+      - name: Install dependencies
+        run: |
+          for i in 1 2 3; do
+            pnpm install --frozen-lockfile && exit 0
+            echo "pnpm install failed (attempt $i), retrying..."; sleep 30
+          done
+          exit 1
+
+      - uses: ./.github/actions/install-mobile-dependencies
+
+      # The build verifies the Linux computer-use provider (AT-SPI bindings), as in Orca's release.
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-gi gir1.2-atspi-2.0 at-spi2-core xclip xdotool
+
+      - name: Build app
+        run: pnpm build:release
+
+      - name: Package AppImage and .deb
+        run: |
+          node config/scripts/ensure-native-runtime.mjs --runtime=electron
+          pnpm exec electron-builder --config eddy/build/electron-builder.eddy.config.cjs --linux AppImage deb --x64 --publish never
+          node eddy/build/eddy-update-manifest.cjs "$VERSION" dist/latest-linux.yml
+
+      - name: Collect outputs
+        run: |
+          mkdir release
+          for file in "eddy-omega-$VERSION-linux-x86_64.AppImage" "eddy-omega-$VERSION-linux-amd64.deb" latest-linux.yml; do
+            test -f "dist/$file" || { echo "::error::missing dist/$file"; exit 1; }
+            cp "dist/$file" release/
+          done
+          ls -l release
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: linux-x64
+          path: release/*
+          retention-days: 14
+
+  release:
+    name: Publish release
+    if: github.ref_type == 'tag'
+    needs: [label, windows-x64, linux-x64]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      LABEL: ${{ needs.label.outputs.label }}
+      QUALITY: ${{ needs.label.outputs.quality }}
+      # Falls back to the built-in token; set EDDY_RELEASE_TOKEN (fine-grained, Contents: read and
+      # write on this repo) if the built-in token can't create releases on this account.
+      GH_TOKEN: ${{ secrets.EDDY_RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
+      REPO: ${{ github.repository }}
+      TAG: ${{ github.ref_name }}
+      COMMIT: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Checksums
+        working-directory: dist
+        run: sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt
+
+      # Draft first, so installed builds never see a release whose update manifests or
+      # installers are still uploading.
+      - name: Publish release
+        run: |
+          orca=$(node -p "require('./package.json').version")
+          stage=""; if [ "$QUALITY" != stable ]; then stage=" ($QUALITY)"; fi
+          notes="eddy omega **$LABEL**$stage, based on Orca v$orca.
+
+          Install: Windows \`eddy-omega-$LABEL-windows-x64-setup.exe\` (updates itself); Linux \`eddy-omega-$LABEL-linux-x86_64.AppImage\` (updates itself) or \`sudo apt install ./eddy-omega-$LABEL-linux-amd64.deb\`.
+
+          Builds are not code-signed yet."
+          gh release create "$TAG" dist/* --repo "$REPO" --target "$COMMIT" --draft \
+            --title "eddy omega $LABEL$stage" --notes "$notes" --generate-notes
+          gh release edit "$TAG" --repo "$REPO" --draft=false --latest

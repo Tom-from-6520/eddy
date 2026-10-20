@@ -1,0 +1,79 @@
+# eddy checks for every push to main and every pull request: type-check, lint and format the
+# changed files, and run eddy's tests (eddy's build-script tests, eddy-owned unit tests, the tests
+# next to every upstream file with an `eddy:` hook, and the updater tests).
+name: eddy checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: eddy-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Type-check, lint, tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      NODE_OPTIONS: --max-old-space-size=6144
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      # pnpm must be on PATH before setup-node so setup-node can locate the store.
+      - uses: pnpm/setup@84cb39b217b10273981911c288cd62326dc7c6d2 # v2.0.2
+        with:
+          install: false
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version-file: package.json
+          cache: pnpm
+
+      # Same as Orca's Linux CI: pnpm's bundled node-gyp fails some native postinstalls.
+      - name: Use external node-gyp
+        run: |
+          npm install -g node-gyp@11.5.0
+          echo "npm_config_node_gyp=$(npm root -g)/node-gyp/bin/node-gyp.js" >> "$GITHUB_ENV"
+
+      - name: Install dependencies
+        run: |
+          for i in 1 2 3; do
+            pnpm install --frozen-lockfile && exit 0
+            echo "pnpm install failed (attempt $i), retrying..."; sleep 30
+          done
+          exit 1
+
+      - name: Type-check
+        run: pnpm typecheck
+
+      - name: Lint and format changed files
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -z "$BASE" ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then BASE=HEAD~1; fi
+          mapfile -t files < <(git diff --name-only --diff-filter=d "$BASE" HEAD -- \
+            '*.ts' '*.tsx' '*.js' '*.mjs' '*.cjs')
+          echo "Checking ${#files[@]} file(s):"; printf '  %s\n' "${files[@]}"
+          if [ "${#files[@]}" -eq 0 ]; then exit 0; fi
+          pnpm exec oxlint "${files[@]}"
+          pnpm exec oxfmt --check "${files[@]}"
+
+      - name: eddy build-script tests
+        run: node --test "eddy/build/*.test.cjs"
+
+      - name: Unit tests (eddy, hooked upstream files, updater)
+        run: |
+          mapfile -t tests < <(node eddy/scripts/eddy-test-files.mjs)
+          echo "Running ${#tests[@]} test file(s):"; printf '  %s\n' "${tests[@]}"
+          pnpm run test:node "${tests[@]}"
