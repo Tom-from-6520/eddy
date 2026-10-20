@@ -114,7 +114,7 @@ Details and commands: [`eddy/AGENTS.md`](./AGENTS.md).
   - every channel's repo, the atom feed and the fallback feed are `Tom-from-6520/eddy-omega` (`release-channel.ts`, `updater-prerelease-feed.ts`, `updater-setup.ts`, `updater-release-feed.ts`);
   - version comparisons use `eddyVersion` (`getUpdaterAppVersion()` in `updater-release-feed.ts`, `updater-events.ts`, `updater-install-support.ts`), and electron-updater's own current version is replaced with `eddyVersion` when it loads (`electron-updater-loader.ts` → `src/main/eddy/eddy-updater-version.ts`);
   - the release workflow writes `eddyVersion` into `latest.yml` / `latest-linux.yml` (`eddy/build/eddy-update-manifest.cjs`);
-  - Orca's changelog (keyed to Orca versions) is off. Update nudges are off until eddy's own nudge file exists (§9: decided to host it, to build).
+  - Orca's changelog (keyed to Orca versions) is off. Update nudges come from eddy's own `eddy/update-nudge.json` (§9).
   - Releases are full GitHub releases, not pre-releases: the updater's fallback reads `/releases/latest`, which skips pre-releases.
   - Not adapted: the hidden build picker (Alt-click on the release channel) still checks profile compatibility against Orca's version.
 - **Platforms:** Windows x64 (NSIS installer, self-updating) and Linux x64 (AppImage, self-updating; `.deb`). macOS needs an Apple Developer account and notarization; later, if ever.
@@ -127,9 +127,9 @@ Details and commands: [`eddy/AGENTS.md`](./AGENTS.md).
   - `orca://` deep links in app code; Orca's `agent-state-rules` live update still reads Orca's releases (data, harmless).
   - UI text still says "Orca" (and "orca.yaml"). Proposal: one rebranding hook in Orca's i18n `translate()`, like eddy's `brandMessage`, instead of editing strings (W-B1).
 
-## 9. Orca services (decided 10-20, to build as W-S1)
+## 9. Orca services (decided 10-20, built 10-20 as W-S1)
 
-Orca talks to Stably/Orca services. Decisions for eddy release builds:
+Orca talks to Stably/Orca services. Decisions for eddy release builds (UI entry points use `src/renderer/src/eddy/orca-feature.tsx`):
 
 | Service | Where | Decision |
 |---|---|---|
@@ -168,8 +168,8 @@ Scope: ~40 lines in ~35 files (a shared `EDDY_HOME_DIR` constant via `eddyAwareI
 
 1. ~~**T0 — Fork setup**~~ — done 10-19: clone, `upstream` remote, `main` on `upstream/v1.4.230`, docs, version file, workflow-disable script; pushed to `Tom-from-6520/eddy-omega` (public).
 2. ~~**CI/CD**~~ — 10-19: `eddy-checks.yml`, `eddy-build.yml`, eddy omega identity and updater (§8). Actions enabled with every upstream workflow disabled. See §11a for verification status.
-3. **T1 — Build and run from source** on the personal machine (`pnpm install --frozen-lockfile`, `pnpm dev`, `pnpm tc`, one test), and **test the updater by hand**: install 0.1.0, release 0.1.1, update. Note every prerequisite in `eddy/AGENTS.md`.
-4. **W-S1 — Orca services** (§9): block feedback/crash submission, star prompt off, eddy-hosted update nudges, "(orca feat)" disabled buttons. Small, independent of the Orca study; can run in parallel with it.
+3. ~~**T1 — Updater by hand**~~ — 10-20: installed 0.1.0 (Windows user setup), it updated itself to 0.1.1 (installed `eddyVersion` 0.1.1, installer fetched from eddy-omega's release). Building from source on the personal machine is still to do.
+4. ~~**W-S1 — Orca services**~~ (§9) — 10-20: feedback/crash blocked, star prompt off, eddy-hosted update nudges, "(orca feat)" disabled buttons; About/Settings show `eddyVersion`.
 5. **T2 — Orca study** (§1.1): use eddy omega for real work for a few days and read the code behind what you use, then write **§5.1 "Orca's model"** in Orca's own terms: projects/repos/workspaces, the sidebar, tabs/splits and layout (answers Q-L1), native chat sessions (how many per workspace, history), file explorer and source control (what drives them), keybindings and the command palette, settings/profiles. End with a gap list: each need in §3–4 → "Orca already does it", "small change to an Orca concept", or "new concept".
 6. **W-S2 — `~/.eddy`, `.eddy/`, `eddy.yaml`** (§9.1). After T1, because agent hooks must be tested by hand.
 7. **T3 — First change in Orca's terms:** the smallest gap from T2 that makes Orca feel like §3–4 (replacing the old "Working Context spike"). It must work with Orca's file explorer, source control, layout and keybindings. **Measure the upstream files touched and hook lines added.**
@@ -181,7 +181,8 @@ Scope: ~40 lines in ~35 files (a shared `EDDY_HOME_DIR` constant via `eddyAwareI
 ### 11a. Verification status (CI/CD)
 - 10-20: `eddy-checks` green (type-check of ~16.6k files, lint/format of changed files, 36 test files + eddy build-script tests). `eddy-build` green on Windows x64 and Linux x64; the build verifies the packaged app is `eddy-omega` with `eddyVersion` and Orca's internal version.
 - **v0.1.0 published** (full release, built-in Actions token; no `EDDY_RELEASE_TOKEN` needed). The atom feed, `/releases/latest/download/latest.yml` and `latest-linux.yml` resolve with `version: 0.1.0`. **v0.1.1** (eddy branding, PR #1) published the same way.
-- **Not yet verified by hand:** installing 0.1.0 (Windows, AppImage, .deb) and updating to 0.1.1. Do this first on the personal machine.
+- **Verified by hand 10-20 (Windows, user setup):** 0.1.0 updated itself to 0.1.1. Not yet tried: AppImage and `.deb` installs/updates.
+- Cosmetic: the install folder's uninstaller is named `Uninstall Orca.exe` (electron-builder names it after the executable, `Orca.exe`); Apps & features shows "eddy".
 
 ## 12. Open questions
 
@@ -226,3 +227,4 @@ eddy-omega decisions:
 | O14 | 10-20 | Mobile companion, Orca account, share/publish and skill sharing: buttons disabled, with "(orca feat)" in their title, until replaced or removed. |
 | O15 | 10-20 | Home folder `~/.orca` → `~/.eddy` (shared folder with the VS Code eddy; no name clashes). Per-repo `.orca/` → `.eddy/`, `orca.yaml` → `eddy.yaml` (proposed: fall back to `orca.yaml`). |
 | O16 | 10-20 | MCP / skills panels: decide later (Q-UI1). |
+| O17 | 10-20 | Help → About and Settings show eddy's version: `0.1.x alpha (Orca 1.4.230)`, like eddy's `0.1.5 alpha (Code - OSS 1.141.0)`. |
