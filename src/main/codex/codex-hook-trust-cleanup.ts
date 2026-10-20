@@ -28,6 +28,7 @@ import {
 import type { CodexTrustGrantLedgerHome } from './codex-trust-grant-ledger'
 import type { CodexHookHashes } from './codex-hook-trust-derivation'
 import type { CodexWslRuntimeHookInstallPlan } from './codex-wsl-hook-install-plan'
+import { APP_HOME_DIR_NAME } from '../../shared/eddy/eddy-build' // eddy: ~/.eddy in eddy release builds
 
 export function collectManagedTrustEntries(
   sourcePath: string,
@@ -177,7 +178,9 @@ export function removeStaleWslRuntimeManagedHookTrustEntries(
     managedEventLabels: CODEX_MANAGED_EVENT_LABELS,
     timeoutSec: MANAGED_HOOK_TIMEOUT_SECONDS,
     buildManagedCommand: (linuxRuntimeHome) =>
-      wrapReadablePosixHookCommand(`${linuxRuntimeHome}/.orca/agent-hooks/codex-hook.sh`),
+      wrapReadablePosixHookCommand(
+        `${linuxRuntimeHome}/${APP_HOME_DIR_NAME}/agent-hooks/codex-hook.sh`
+      ),
     priorLedgerHomes
   })
 }

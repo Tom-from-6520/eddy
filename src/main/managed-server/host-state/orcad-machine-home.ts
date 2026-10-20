@@ -21,6 +21,7 @@ import {
   validateRemoteHome,
   type RemoteHostPlatform
 } from '../../ssh/ssh-remote-platform'
+import { APP_HOME_DIR_NAME } from '../../../shared/eddy/eddy-build' // eddy: ~/.eddy in eddy release builds
 
 /** Under `~/.orca-remote`: names the one machine that owns the login home's orcad state. */
 export const ORCAD_MACHINE_CLAIM_FILENAME = 'orcad-machine.json'
@@ -32,7 +33,7 @@ const SECTION = '__ORCA_MACHINE_HOME_SECTION__'
 const CLAIM_ABSENT = 'ABSENT'
 const CLAIM_PRESENT = 'PRESENT'
 const RECORD_MAX_BYTES = 4096
-const ACCESS_ROOT = '.orca/.profile-state-access'
+const ACCESS_ROOT = `${APP_HOME_DIR_NAME}/.profile-state-access`
 const INSTALLED = 'INSTALLED'
 // What `stat -f -c %T` (GNU and busybox) names a local disk filesystem; anything else may be shared.
 const LOCAL_FILESYSTEM_TYPES = new Set([

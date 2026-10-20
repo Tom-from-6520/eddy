@@ -15,6 +15,7 @@ import { statUserOpenedPath } from '@/lib/user-opened-local-path'
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/constants'
 import { openDocumentInFloatingWorkspace } from '@/lib/open-document-in-floating-workspace'
 import { requireRuntimeTargetForFileOwner } from '@/lib/file-owner-runtime-target'
+import { REPO_DATA_DIR_NAME } from '../../../../shared/eddy/eddy-build' // eddy: .eddy/ in eddy release builds
 
 export function shouldUploadRemoteEditorFileDrop(
   target: RuntimeClientTarget,
@@ -159,7 +160,7 @@ async function openEditorFileDropPaths(
     try {
       // Why: OS file drops provide client-local paths. Remote runtime and
       // SSH editors must upload into the server worktree before opening.
-      const destinationDir = joinPath(worktreePath, '.orca/drops')
+      const destinationDir = joinPath(worktreePath, `${REPO_DATA_DIR_NAME}/drops`)
       const { results } = await importExternalPathsToRuntime(
         fileContext,
         [...paths],

@@ -2,6 +2,7 @@ import type { Repo } from '../../../../shared/repo-types'
 import type { SettingsSearchEntry } from './settings-search'
 import { translate } from '@/i18n/i18n'
 import { translateSearchKeyword } from './settings-search-keywords'
+import { REPO_DATA_DIR_NAME } from '../../../../shared/eddy/eddy-build' // eddy: .eddy/ in eddy release builds
 
 export function getRepositoryGitHooksSearchEntries(repo: Repo): SettingsSearchEntry[] {
   return [
@@ -165,7 +166,7 @@ export function getRepositoryGitHooksSearchEntries(repo: Repo): SettingsSearchEn
         ),
         ...translateSearchKeyword(
           'auto.components.settings.repository.search.bc7e504b8e',
-          '.orca/issue-command'
+          `${REPO_DATA_DIR_NAME}/issue-command`
         )
       ]
     }

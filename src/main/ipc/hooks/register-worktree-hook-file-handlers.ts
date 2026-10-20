@@ -7,6 +7,7 @@ import { readIssueCommand, writeIssueCommand } from '../../issue-command-file'
 import { resolveRepoForExecutionHost } from '../worktrees/repo-host-ownership'
 import type { WorktreeIpcContext } from '../worktrees/worktree-ipc-context'
 import { assertWslMoveRepoWritable } from '../../persistence/moving-wsl-projects/wsl-move-scope-guard'
+import { REPO_DATA_DIR_NAME } from '../../../shared/eddy/eddy-build' // eddy: .eddy/ in eddy release builds
 
 /** Route private command overrides to the owning host without changing shared hook settings. */
 export function registerWorktreeHookFileHandlers(context: WorktreeIpcContext): void {
@@ -34,7 +35,7 @@ export function registerWorktreeHookFileHandlers(context: WorktreeIpcContext): v
           localContent: null,
           sharedContent: null,
           effectiveContent: null,
-          localFilePath: joinWorktreeRelativePath(repo.path, '.orca/issue-command'),
+          localFilePath: joinWorktreeRelativePath(repo.path, `${REPO_DATA_DIR_NAME}/issue-command`),
           source: 'none' as const
         }
       }

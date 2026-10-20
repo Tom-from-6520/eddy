@@ -6,6 +6,7 @@ import { isFolderRepo } from '../../shared/repo-kind'
 import { joinWorktreeRelativePath } from './runtime-relative-paths'
 import type { RuntimeStore } from './runtime-store-contract'
 import { assertWslMoveRepoWritable } from '../persistence/moving-wsl-projects/wsl-move-scope-guard'
+import { REPO_DATA_DIR_NAME } from '../../shared/eddy/eddy-build' // eddy: .eddy/ in eddy release builds
 
 type RuntimeRepositoryIssueCommandDeps = {
   resolveRepo: (selector: string) => Promise<Repo>
@@ -36,7 +37,7 @@ export class RuntimeRepositoryIssueCommand {
       localContent: null,
       sharedContent: null,
       effectiveContent: null,
-      localFilePath: joinWorktreeRelativePath(repo.path, '.orca/issue-command'),
+      localFilePath: joinWorktreeRelativePath(repo.path, `${REPO_DATA_DIR_NAME}/issue-command`),
       source: 'none' as const
     }
   }

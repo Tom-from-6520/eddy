@@ -11,14 +11,18 @@ export function readEddyProduct(root = process.cwd()) {
 }
 
 /**
- * Compile-time constants for src/shared/eddy/eddy-build.ts. They are only set when
- * EDDY_RELEASE_BUILD=1 (eddy's release workflow), so dev runs keep Orca's behavior.
+ * Compile-time constants for src/shared/eddy/eddy-build.ts. They are only defined when
+ * EDDY_RELEASE_BUILD=1 (eddy's release workflow); elsewhere they stay undeclared, which reads
+ * as off, so dev runs keep Orca's behavior and Orca's build output is byte-identical.
  * @returns {Record<string, string>}
  */
 export function eddyViteDefines(env = process.env) {
-  const product = env.EDDY_RELEASE_BUILD === '1' ? readEddyProduct() : null
+  if (env.EDDY_RELEASE_BUILD !== '1') {
+    return {}
+  }
+  const product = readEddyProduct()
   return {
-    EDDY_VERSION: JSON.stringify(product?.eddyVersion ?? null),
-    EDDY_QUALITY: JSON.stringify(product?.quality ?? null)
+    EDDY_VERSION: JSON.stringify(product.eddyVersion),
+    EDDY_QUALITY: JSON.stringify(product.quality)
   }
 }
