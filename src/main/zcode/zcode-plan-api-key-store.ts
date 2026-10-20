@@ -4,6 +4,7 @@ import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { hardenExistingSecureFile, writeSecureFile } from '../../shared/secure-file'
 import type { SecretAtRestProtection } from '../../shared/secret-at-rest-protection'
+import { APP_HOME_DIR_NAME } from '../../shared/eddy/eddy-build' // eddy: ~/.eddy in eddy release builds
 
 const ZCODE_PLAN_API_KEY_FILE = 'zcode-plan-api-key.enc'
 export const API_KEY_ENVELOPE_PREFIX = 'orca-zcode-plan-api-key:v1:'
@@ -16,7 +17,7 @@ type ZcodePlanApiKeyEnvelope = {
 }
 
 export function getZcodePlanApiKeyPath(): string {
-  return join(homedir(), '.orca', ZCODE_PLAN_API_KEY_FILE)
+  return join(homedir(), APP_HOME_DIR_NAME, ZCODE_PLAN_API_KEY_FILE)
 }
 
 function encodeApiKeyEnvelope(kind: ZcodePlanApiKeyEnvelope['kind'], payload: Buffer): string {

@@ -34,6 +34,7 @@ import {
 import { detectRemoteHostPlatform } from '../../ssh/ssh-remote-platform-detection'
 import { OrcadHostUnsupportedError } from '../../orcad/orcad-host-unavailable'
 import { rememberSshHostPlatform } from '../../ssh/ssh-host-platform-memo'
+import { APP_HOME_DIR_NAME } from '../../../shared/eddy/eddy-build' // eddy: ~/.eddy in eddy release builds
 
 /** Defaults to SSH: most lifecycle code still reads SSH-only target fields. */
 export type OrcadRemoteContext<Target extends OrcadHostTarget = SshTarget> = {
@@ -119,7 +120,7 @@ export async function resolveOrcadMachineHome(
     return {
       loginHome,
       orcadHome: loginHome,
-      userDataDir: joinRemotePath(host, loginHome, '.orca')
+      userDataDir: joinRemotePath(host, loginHome, APP_HOME_DIR_NAME)
     }
   }
   const probe = parseOrcadMachineHomeProbe(
@@ -158,7 +159,7 @@ export async function resolveOrcadMachineHome(
     return {
       loginHome,
       orcadHome: loginHome,
-      userDataDir: joinRemotePath(host, loginHome, '.orca')
+      userDataDir: joinRemotePath(host, loginHome, APP_HOME_DIR_NAME)
     }
   }
   const orcadHome = orcadMachineHomeDir(host, loginHome, decision.machineKey)

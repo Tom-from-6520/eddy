@@ -42,6 +42,7 @@ import {
   readMuseSettingsSource,
   serializeMuseSettings
 } from './hook-config-json'
+import { APP_HOME_DIR_NAME } from '../../shared/eddy/eddy-build' // eddy: ~/.eddy in eddy release builds
 
 function getManagedScript(target: 'local' | 'posix' = 'local'): string {
   if (target === 'local' && process.platform === 'win32') {
@@ -228,7 +229,7 @@ export class MuseHookService {
   // Install the Muse hook on an SSH execution host, where the shell contract is POSIX.
   async installRemote(sftp: SFTPWrapper, remoteHome: string): Promise<AgentHookInstallStatus> {
     const remoteConfigPath = getMuseRemoteConfigPath(remoteHome)
-    const remoteScriptPath = `${remoteHome.replace(/\/$/, '')}/.orca/agent-hooks/muse-hook.sh`
+    const remoteScriptPath = `${remoteHome.replace(/\/$/, '')}/${APP_HOME_DIR_NAME}/agent-hooks/muse-hook.sh`
     const remoteManagedHooksPath = getMuseRemoteManagedHooksPath(remoteHome)
     try {
       const body = await readTextFileRemote(sftp, remoteConfigPath)

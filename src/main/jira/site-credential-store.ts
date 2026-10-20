@@ -8,6 +8,7 @@ import type { JiraSite, JiraSiteSelection } from '../../shared/jira-types'
 import { createIntegrationStateFileCache } from '../integration-state-file-cache'
 import { isJiraGatewayBaseUrl } from './gateway-base-url'
 import { createIntegrationTokenFileCache } from '../integration-token-file-cache'
+import { APP_HOME_DIR_NAME } from '../../shared/eddy/eddy-build' // eddy: ~/.eddy in eddy release builds
 
 export type JiraSiteFile = {
   version: 1
@@ -27,7 +28,7 @@ export function getCredentialError(siteId: string): string | undefined {
 }
 
 function getOrcaDir(): string {
-  return join(homedir(), '.orca')
+  return join(homedir(), APP_HOME_DIR_NAME)
 }
 
 function getSiteFilePath(): string {

@@ -8,10 +8,11 @@ import {
   MAX_BROWSER_DOWNLOAD_COLLISION_ATTEMPTS,
   normalizeBrowserDownloadFilename
 } from '../../shared/browser-download-filename'
+import { REPO_DATA_DIR_NAME } from '../../shared/eddy/eddy-build' // eddy: .eddy/ in eddy release builds
 
 // Why: client-hosted downloads land in the remote workspace, not the desktop, so they need a
 // stable in-workspace home that the containment-checked file transfer path can reach.
-export const BROWSER_CLIENT_DOWNLOAD_WORKSPACE_DIRECTORY = '.orca/browser-downloads'
+export const BROWSER_CLIENT_DOWNLOAD_WORKSPACE_DIRECTORY = `${REPO_DATA_DIR_NAME}/browser-downloads`
 
 export type BrowserClientDownloadTransferDependencies = {
   writeChunk(input: {

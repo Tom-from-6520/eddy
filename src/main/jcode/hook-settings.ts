@@ -3,6 +3,7 @@
 // managed observer hooks there so sessions launched outside Orca still report.
 import { homedir } from 'node:os'
 import { join } from 'node:path'
+import { APP_HOME_DIR_NAME } from '../../shared/eddy/eddy-build' // eddy: ~/.eddy in eddy release builds
 
 const JCODE_SCRIPT_BASE = 'jcode-hook'
 
@@ -44,7 +45,7 @@ export function getJcodeManagedScriptPath(): string {
 }
 
 export function getSharedJcodeScriptPath(scriptFileName: string): string {
-  return join(homedir(), '.orca', 'agent-hooks', scriptFileName)
+  return join(homedir(), APP_HOME_DIR_NAME, 'agent-hooks', scriptFileName)
 }
 
 // Why quoted: jcode executes hook commands directly (no shell), but it tokenizes the

@@ -37,6 +37,7 @@ import {
   hasManagedCommand,
   removeInstalledConfig
 } from './hooks-json-bundle'
+import { APP_HOME_DIR_NAME } from '../../shared/eddy/eddy-build' // eddy: ~/.eddy in eddy release builds
 
 function getConfigPath(): string {
   // Why: Antigravity's hook docs define global hooks in ~/.gemini/config/hooks.json,
@@ -201,7 +202,7 @@ export class AntigravityHookService {
   async installRemote(sftp: SFTPWrapper, remoteHome: string): Promise<AgentHookInstallStatus> {
     const home = remoteHome.replace(/\/$/, '')
     const remoteConfigPath = `${home}/.gemini/config/hooks.json`
-    const remoteScriptPath = `${home}/.orca/agent-hooks/antigravity-hook.sh`
+    const remoteScriptPath = `${home}/${APP_HOME_DIR_NAME}/agent-hooks/antigravity-hook.sh`
     try {
       const config = await readHooksJsonRemote(sftp, remoteConfigPath)
       if (!config) {

@@ -7,6 +7,7 @@ import {
 } from '../../../../shared/execution-host'
 import { resolveExactWorktreeRoute } from '@/lib/worktree-owner-route'
 import { isTerminalDropWindowsPathLike } from './terminal-drop-shell'
+import { REPO_DATA_DIR_NAME } from '../../../../shared/eddy/eddy-build' // eddy: .eddy/ in eddy release builds
 
 export function resolveTerminalDropWorktreePath(
   worktreeId: string,
@@ -41,7 +42,7 @@ export function resolveTerminalDropWorktreePath(
 
 export function joinRuntimeTerminalDropDir(worktreePath: string): string {
   if (isTerminalDropWindowsPathLike(worktreePath)) {
-    return `${worktreePath.replace(/[\\/]+$/, '').replace(/\//g, '\\')}\\.orca\\drops`
+    return `${worktreePath.replace(/[\\/]+$/, '').replace(/\//g, '\\')}\\${REPO_DATA_DIR_NAME}\\drops`
   }
-  return `${worktreePath.replace(/[\\/]+$/, '')}/.orca/drops`
+  return `${worktreePath.replace(/[\\/]+$/, '')}/${REPO_DATA_DIR_NAME}/drops`
 }

@@ -1,4 +1,5 @@
 import type { ComposerModel } from './composer-model'
+import { REPO_DATA_DIR_NAME } from '../../../../shared/eddy/eddy-build' // eddy: .eddy/ in eddy release builds
 
 type AttachmentDropStateInput = Pick<
   ComposerModel,
@@ -148,7 +149,7 @@ export function useAttachmentDropState(input: AttachmentDropStateInput) {
         }
         return { filePaths: [], folderPaths: [] }
       }
-      const destinationDir = joinPath(targetRepoPath, '.orca/drops')
+      const destinationDir = joinPath(targetRepoPath, `${REPO_DATA_DIR_NAME}/drops`)
       const sshExpectation = targetConnectionId
         ? captureDirectSshMutationExpectation(
             useAppStore.getState(),

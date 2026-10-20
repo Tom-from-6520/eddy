@@ -9,6 +9,7 @@ import {
 } from '../../shared/secure-file'
 import type { SecretAtRestProtection } from '../../shared/secret-at-rest-protection'
 import { ApiKeyFileUnreadableError } from './api-key-file-unreadable-error'
+import { APP_HOME_DIR_NAME } from '../../shared/eddy/eddy-build' // eddy: ~/.eddy in eddy release builds
 
 type EncryptedApiKeyFileStore = {
   /** Where the envelope lives and how it starts, for orcad's plaintext migration. */
@@ -40,7 +41,7 @@ export function createEncryptedApiKeyFileStore({
   }
 
   function getOrcaDir(): string {
-    return join(homedir(), '.orca')
+    return join(homedir(), APP_HOME_DIR_NAME)
   }
 
   function getApiKeyPath(): string {

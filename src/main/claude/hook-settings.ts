@@ -21,6 +21,7 @@ import {
 } from '../agent-hooks/runtime-home-hook-command'
 import { wrapWindowsDirectCmdHookCommand } from '../agent-hooks/windows-direct-cmd-hook-command'
 import type { ClaudeManagedHookPlan } from './claude-managed-hook-events'
+import { APP_HOME_DIR_NAME } from '../../shared/eddy/eddy-build' // eddy: ~/.eddy in eddy release builds
 
 export type ClaudeCompatibleHookSettings = {
   configDirName: '.claude' | '.openclaude' | '.qoder' | '.qoder-cn' | '.qwen' | '.codebuddy'
@@ -166,7 +167,9 @@ export function getWindowsManagedLifecycleHook(scriptPath: string): HookCommandC
 
 function getWindowsPowerShellLifecycleCommand(scriptPath: string): string {
   const scriptFileName = win32.basename(scriptPath)
-  const quotedRelativePath = quotePowerShellLiteral(`.orca\\agent-hooks\\${scriptFileName}`)
+  const quotedRelativePath = quotePowerShellLiteral(
+    `${APP_HOME_DIR_NAME}\\agent-hooks\\${scriptFileName}`
+  )
   return (
     `$scriptPath = Join-Path $env:USERPROFILE ${quotedRelativePath}; ` +
     'if (Test-Path -LiteralPath $scriptPath -PathType Leaf) { & $scriptPath; exit $LASTEXITCODE }; ' +

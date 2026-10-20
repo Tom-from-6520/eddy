@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { basename, dirname, join } from 'node:path'
 import { ORCAD_SERVER_ENTRY_FILENAME } from '../../src/shared/orcad-artifacts.ts'
+import { eddyViteDefines } from '../../eddy/build/eddy-vite-defines.mjs' // eddy: build-time constants
 
 const root = join(import.meta.dirname, '..', '..')
 const { turnedOnDarkBuildDefines } = createRequire(import.meta.url)('../dark-build-switches.cjs')
@@ -38,7 +39,8 @@ export const ORCAD_COMMONJS_MODULE_OPTIONS = {
   define: {
     'import.meta.url': '__orcadModuleUrl',
     // Why only when on: an undeclared switch already reads as off, so other builds keep their bytes.
-    ...turnedOnDarkBuildDefines()
+    ...turnedOnDarkBuildDefines(),
+    ...eddyViteDefines() // eddy: same rule; empty outside eddy release builds
   },
   logOverride: { 'empty-import-meta': 'error' }
 }
