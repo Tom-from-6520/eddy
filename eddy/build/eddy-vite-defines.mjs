@@ -11,11 +11,14 @@ export function readEddyProduct(root = process.cwd()) {
 }
 
 /**
- * Compile-time constants for src/shared/eddy/eddy-build.ts. EDDY_VERSION is only set when
+ * Compile-time constants for src/shared/eddy/eddy-build.ts. They are only set when
  * EDDY_RELEASE_BUILD=1 (eddy's release workflow), so dev runs keep Orca's behavior.
  * @returns {Record<string, string>}
  */
 export function eddyViteDefines(env = process.env) {
-  const version = env.EDDY_RELEASE_BUILD === '1' ? readEddyProduct().eddyVersion : null
-  return { EDDY_VERSION: JSON.stringify(version) }
+  const product = env.EDDY_RELEASE_BUILD === '1' ? readEddyProduct() : null
+  return {
+    EDDY_VERSION: JSON.stringify(product?.eddyVersion ?? null),
+    EDDY_QUALITY: JSON.stringify(product?.quality ?? null)
+  }
 }

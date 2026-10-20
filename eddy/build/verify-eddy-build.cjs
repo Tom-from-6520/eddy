@@ -18,7 +18,7 @@ function findUnsubstitutedDefine(dir) {
       }
     } else if (
       /\.(c|m)?js$/.test(entry.name) &&
-      readFileSync(path, 'utf8').includes('EDDY_VERSION')
+      /EDDY_(VERSION|QUALITY)/.test(readFileSync(path, 'utf8'))
     ) {
       return path
     }
@@ -36,7 +36,7 @@ function main([resourcesDir]) {
     const unsubstituted = findUnsubstitutedDefine(join(root, 'out', bundle))
     if (unsubstituted) {
       throw new Error(
-        `EDDY_VERSION was not substituted in ${unsubstituted}; set EDDY_RELEASE_BUILD=1`
+        `EDDY_VERSION/EDDY_QUALITY was not substituted in ${unsubstituted}; set EDDY_RELEASE_BUILD=1`
       )
     }
   }

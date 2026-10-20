@@ -23,6 +23,7 @@ import {
 import { notifyInstalledAgentSkillsChanged } from '@/hooks/useInstalledAgentSkills'
 import { useSkillInstallProgress } from './skill-install-progress-state'
 import { translate } from '@/i18n/i18n'
+import { OrcaFeatureGate } from '@/eddy/orca-feature'
 import { resolveSkillShareForInstall } from './skill-warning-preview-gate'
 import { useSkillInstallRisk } from './use-skill-install-risk'
 import { SkillInstallDialogFooter } from './SkillInstallDialogFooter'
@@ -304,11 +305,14 @@ export function SkillInstallDialog({
             {translate('auto.components.skills.SkillInstallDialog.opening', 'Opening this link…')}
           </p>
         ) : !preview ? (
-          <SkillShareLinkInputForm
-            link={link}
-            onLinkChange={setLink}
-            onSubmit={() => void inspect()}
-          />
+          // eddy: skill links use Orca's share service; disabled in eddy release builds.
+          <OrcaFeatureGate>
+            <SkillShareLinkInputForm
+              link={link}
+              onLinkChange={setLink}
+              onSubmit={() => void inspect()}
+            />
+          </OrcaFeatureGate>
         ) : bundleVersion ? (
           <SkillBundleInstallFlow
             shareId={preview.shareId}

@@ -34,6 +34,7 @@ import { useSetupGuideProgress } from '../setup-guide/use-setup-guide-progress'
 import { lazyWithRetry } from '@/lib/lazy-with-retry'
 import type * as SidebarFeedbackDialogModule from './SidebarFeedbackDialog'
 import { translate } from '@/i18n/i18n'
+import { ORCA_FEATURE_DISABLED, orcaFeatureLabel } from '@/eddy/orca-feature'
 import { getUpdateCheckClickOptions, getUpdateCheckHint } from '@/lib/update-check-click-options'
 
 // Why lazy: the feedback form is only reachable from this menu's own item, so it does not
@@ -253,11 +254,14 @@ export function SidebarSettingsHelpMenu(): React.JSX.Element {
               )}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={handleOpenFeedback}>
+            <DropdownMenuItem onSelect={handleOpenFeedback} disabled={ORCA_FEATURE_DISABLED}>
               <MessageSquareText className="size-3.5" />
-              {translate(
-                'auto.components.sidebar.SidebarSettingsHelpMenu.4cf5b868d7',
-                'Send Feedback'
+              {/* eddy: feedback is never sent from eddy release builds */}
+              {orcaFeatureLabel(
+                translate(
+                  'auto.components.sidebar.SidebarSettingsHelpMenu.4cf5b868d7',
+                  'Send Feedback'
+                )
               )}
             </DropdownMenuItem>
             {showMilestones ? (

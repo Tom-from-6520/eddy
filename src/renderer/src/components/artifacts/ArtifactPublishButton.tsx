@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
+import { ORCA_FEATURE_DISABLED, orcaFeatureLabel } from '@/eddy/orca-feature'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/store'
 import { ArtifactPublishedLinkPanel } from './ArtifactPublishedLinkPanel'
@@ -73,7 +74,8 @@ export function ArtifactPublishButton({
     signedIn && currentLookup?.status !== 'loaded' && currentLookup?.status !== 'error'
   const publishedLink = currentLookup?.status === 'loaded' ? currentLookup.shareUrl : null
   const busy = publishing
-  const blocked = disabled || busy
+  // eddy: publishing goes to Orca's share service; disabled in eddy release builds.
+  const blocked = disabled || busy || ORCA_FEATURE_DISABLED
 
   useEffect(() => {
     const sequence = ++lookupSequence.current
@@ -122,9 +124,8 @@ export function ArtifactPublishButton({
     openSettingsPage()
   }
 
-  const label = translate(
-    'auto.components.artifacts.ArtifactPublishButton.a4a49da6af',
-    'Share as artifact'
+  const label = orcaFeatureLabel(
+    translate('auto.components.artifacts.ArtifactPublishButton.a4a49da6af', 'Share as artifact')
   )
   return (
     <Popover open={open} onOpenChange={(nextOpen) => !busy && setOpen(nextOpen)}>
@@ -144,6 +145,7 @@ export function ArtifactPublishButton({
                 className={cn('shrink-0', className)}
                 disabled={blocked}
                 aria-label={label}
+                title={ORCA_FEATURE_DISABLED ? label : undefined}
               >
                 {publishing ? <Loader2 className="animate-spin" /> : <Share2 />}
               </Button>

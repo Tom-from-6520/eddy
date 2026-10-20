@@ -9,6 +9,7 @@ import { SettingsSetupGuidePane } from './SettingsSetupGuidePane'
 import { ShareSkillsSettingsPane } from './ShareSkillsSettingsPane'
 import { SettingsSection } from './SettingsSection'
 import { translate } from '@/i18n/i18n'
+import { OrcaFeatureGate, orcaFeatureLabel } from '@/eddy/orca-feature'
 import type { SettingsRenderContext } from './settings-render-context'
 
 export function renderOrcaAccountSettingsSection(
@@ -18,14 +19,19 @@ export function renderOrcaAccountSettingsSection(
   return model.showDesktopOnlySettings ? (
     <SettingsSection
       id="orca-account"
-      title={translate('auto.components.settings.orcaAccount.title', 'Orca Account')}
+      // eddy: Orca's cloud account; disabled in eddy release builds.
+      title={orcaFeatureLabel(
+        translate('auto.components.settings.orcaAccount.title', 'Orca Account')
+      )}
       description={translate(
         'auto.components.settings.orcaAccount.description',
         'Share work instantly and reach your desktop from Orca Mobile wherever you are.'
       )}
       searchEntries={navigation.getSectionSearchEntries('orca-account')}
     >
-      {view.isSectionMounted('orca-account') ? <OrcaAccountSettingsPane /> : null}
+      <OrcaFeatureGate>
+        {view.isSectionMounted('orca-account') ? <OrcaAccountSettingsPane /> : null}
+      </OrcaFeatureGate>
     </SettingsSection>
   ) : null
 }
@@ -104,7 +110,8 @@ export function renderMobileSettingsSection(
   return model.showDesktopOnlySettings ? (
     <SettingsSection
       id="mobile"
-      title={translate('auto.components.settings.Settings.c40dadaac8', 'Mobile')}
+      // eddy: Orca Mobile uses Orca's relay; disabled in eddy release builds.
+      title={orcaFeatureLabel(translate('auto.components.settings.Settings.c40dadaac8', 'Mobile'))}
       badge="Beta"
       description={translate(
         'auto.components.settings.Settings.c6c01ac209',
@@ -112,7 +119,9 @@ export function renderMobileSettingsSection(
       )}
       searchEntries={navigation.getSectionSearchEntries('mobile')}
     >
-      {view.isSectionMounted('mobile') ? <MobileSettingsPane /> : null}
+      <OrcaFeatureGate>
+        {view.isSectionMounted('mobile') ? <MobileSettingsPane /> : null}
+      </OrcaFeatureGate>
     </SettingsSection>
   ) : null
 }
@@ -143,7 +152,8 @@ export function renderArtifactsSettingsSection(context: SettingsRenderContext): 
   return (
     <SettingsSection
       id="artifacts"
-      title={translate('auto.components.settings.artifacts.title', 'Artifacts')}
+      // eddy: artifact links use Orca's share service; disabled in eddy release builds.
+      title={orcaFeatureLabel(translate('auto.components.settings.artifacts.title', 'Artifacts'))}
       badge="Beta"
       description={translate(
         'auto.components.settings.artifacts.description',
@@ -151,9 +161,11 @@ export function renderArtifactsSettingsSection(context: SettingsRenderContext): 
       )}
       searchEntries={navigation.getSectionSearchEntries('artifacts')}
     >
-      {view.isSectionMounted('artifacts') ? (
-        <ArtifactsSettingsPane settings={model.settings} updateSettings={model.updateSettings} />
-      ) : null}
+      <OrcaFeatureGate>
+        {view.isSectionMounted('artifacts') ? (
+          <ArtifactsSettingsPane settings={model.settings} updateSettings={model.updateSettings} />
+        ) : null}
+      </OrcaFeatureGate>
     </SettingsSection>
   )
 }
@@ -165,7 +177,10 @@ export function renderShareSkillsSettingsSection(
   return (
     <SettingsSection
       id="share-skills"
-      title={translate('auto.components.settings.shareSkills.title', 'Share Skills')}
+      // eddy: skill links use Orca's share service; disabled in eddy release builds.
+      title={orcaFeatureLabel(
+        translate('auto.components.settings.shareSkills.title', 'Share Skills')
+      )}
       badge="Beta"
       description={translate(
         'auto.components.settings.shareSkills.description',
@@ -173,7 +188,9 @@ export function renderShareSkillsSettingsSection(
       )}
       searchEntries={navigation.getSectionSearchEntries('share-skills')}
     >
-      {view.isSectionMounted('share-skills') ? <ShareSkillsSettingsPane /> : null}
+      <OrcaFeatureGate>
+        {view.isSectionMounted('share-skills') ? <ShareSkillsSettingsPane /> : null}
+      </OrcaFeatureGate>
     </SettingsSection>
   )
 }

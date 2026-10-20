@@ -1,4 +1,5 @@
 import { net } from 'electron'
+import { isEddyBuild } from '../../shared/eddy/eddy-build'
 import { appendFeedbackImagesToFormData } from './feedback-image-attachments'
 import type {
   FeedbackImageAttachment,
@@ -42,6 +43,10 @@ export async function postFeedback(
   timeoutMs = FEEDBACK_REQUEST_TIMEOUT_MS,
   readResponse?: (response: Response) => Promise<void>
 ): Promise<Response> {
+  // eddy: feedback and crash reports are never sent from eddy release builds.
+  if (isEddyBuild()) {
+    throw new Error('eddy does not send feedback or crash reports')
+  }
   const controller = new AbortController()
   // Why: a silent endpoint must not leave feedback IPC pending forever.
   const timeout = setTimeout(() => controller.abort(), timeoutMs)

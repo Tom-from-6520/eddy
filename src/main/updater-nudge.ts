@@ -1,5 +1,5 @@
 import { net } from 'electron'
-import { isEddyBuild } from '../shared/eddy/eddy-build'
+import { EDDY_UPDATE_NUDGE_URL, isEddyBuild } from '../shared/eddy/eddy-build'
 import { compareVersions, isValidVersion } from './updater-fallback'
 
 export type NudgeConfig = {
@@ -9,12 +9,12 @@ export type NudgeConfig = {
 }
 
 export async function fetchNudge(): Promise<NudgeConfig | null> {
-  // eddy: Orca's update campaigns target Orca versions, not eddy omega's.
-  if (isEddyBuild()) {
-    return null
-  }
   try {
-    const res = await net.fetch('https://onorca.dev/whats-new/nudge.json', {
+    // eddy: eddy release builds read eddy's campaigns, compared with eddyVersion.
+    const nudgeUrl = isEddyBuild()
+      ? EDDY_UPDATE_NUDGE_URL
+      : 'https://onorca.dev/whats-new/nudge.json'
+    const res = await net.fetch(nudgeUrl, {
       signal: AbortSignal.timeout(5000)
     })
     if (!res.ok) {

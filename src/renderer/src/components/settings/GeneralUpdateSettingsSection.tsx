@@ -12,6 +12,7 @@ import { getUpdateCheckClickOptions, getUpdateCheckHint } from '@/lib/update-che
 import { GeneralRemoteServerUpdates } from './GeneralRemoteServerUpdates'
 import { ReleaseChannelSection } from './ReleaseChannelSection'
 import { getReleaseNotesUrlForVersion } from '../../../../shared/release-channel'
+import { eddyVersionLabel } from '../../../../shared/eddy/eddy-build'
 
 export function GeneralUpdateSettingsSection(): React.JSX.Element {
   const updateStatus = useAppStore((s) => s.updateStatus)
@@ -74,7 +75,8 @@ export function GeneralUpdateSettingsSection(): React.JSX.Element {
           description={translate(
             'auto.components.settings.GeneralUpdateSettingsSection.d91ebfb87e',
             'Current version: {{value0}}',
-            { value0: appVersion ?? '...' }
+            // eddy: shows "0.1.1 alpha (Orca 1.4.230)" in eddy release builds.
+            { value0: appVersion ? eddyVersionLabel(appVersion) : '...' }
           )}
         />
       </div>
