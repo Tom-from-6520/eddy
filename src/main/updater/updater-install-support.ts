@@ -1,4 +1,5 @@
-import { app } from 'electron'
+// eddy: updates compare eddyVersion in eddy release builds.
+import { getUpdaterAppVersion } from '../eddy/eddy-updater-version'
 import {
   isWindowsSignatureCheckUnavailableFailure,
   isWindowsSignatureMismatchFailure
@@ -25,7 +26,7 @@ export abstract class UpdaterInstallSupport extends UpdaterCheckState {
       // Why: local builds and pinned dev jumps may intentionally move backwards.
       (this.activeUpdateSource !== 'release' ||
         this.isPinnedBuildActive ||
-        compareVersions(this.availableVersion, app.getVersion()) > 0)
+        compareVersions(this.availableVersion, getUpdaterAppVersion()) > 0)
     )
   }
 

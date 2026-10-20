@@ -1,8 +1,9 @@
-import { app } from 'electron'
 import {
   fetchNewerReleaseTagsWithReadiness,
   getReleaseDownloadUrl
 } from '../updater-prerelease-feed'
+import { eddyAwareReleaseRepo } from '../../shared/eddy/eddy-build'
+import { getUpdaterAppVersion } from '../eddy/eddy-updater-version'
 import { isMissingUpdateManifestFailure, isPrereleaseVersion } from '../updater-fallback'
 import type { CheckFailureSource } from './updater-state'
 import type { UpdateCheckVariant } from './updater-types'
@@ -117,7 +118,7 @@ export abstract class UpdaterReleaseFeed extends UpdaterInstallExecution {
     const attemptId = this.activeUpdateCheckAttemptId
     const autoUpdater = this.getAutoUpdater()
     // Why: the latest/download redirect can move between check and download, so pin the concrete tag (prerelease users resolve any channel, stable only stable).
-    const currentVersion = app.getVersion()
+    const currentVersion = getUpdaterAppVersion() // eddy: eddyVersion in eddy release builds
     const isPerfCheck = variant === 'perf'
     const includePrerelease =
       isPerfCheck || this.includePrereleaseActive || isPrereleaseVersion(currentVersion)
@@ -208,7 +209,8 @@ export abstract class UpdaterReleaseFeed extends UpdaterInstallExecution {
     }
     this.clearPrereleaseFallbackContext()
     this.clearPublishingWindowLastGoodCheck()
-    const url = 'https://github.com/stablyai/orca/releases/latest/download'
+    // eddy: eddy release builds fall back to eddy-omega's latest release.
+    const url = `https://github.com/${eddyAwareReleaseRepo('stablyai/orca')}/releases/latest/download`
     console.info(
       `[updater] release feed fallback: current=${currentVersion} includePrerelease=${includePrerelease} → ${url}`
     )

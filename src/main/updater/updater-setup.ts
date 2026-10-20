@@ -14,6 +14,7 @@ import type {
   RemoteServerUpdateSupport
 } from '../../shared/remote-server-update'
 import { getLinuxPackageType } from '../linux-update-package-type'
+import { eddyAwareReleaseRepo } from '../../shared/eddy/eddy-build'
 import { createUpdaterDiagnosticLogger } from '../linux-package-install-diagnostic'
 import { registerAutoUpdaterHandlers } from '../updater-events'
 import { getServeUpdateHandoffFailure } from '../serve-update-handoff'
@@ -162,7 +163,8 @@ export class UpdaterSetup extends UpdaterDownloadInstall {
     if (this.activeUpdateSource === 'release') {
       autoUpdater.setFeedURL({
         provider: 'generic',
-        url: 'https://github.com/stablyai/orca/releases/latest/download'
+        // eddy: eddy release builds update from eddy-omega's releases.
+        url: `https://github.com/${eddyAwareReleaseRepo('stablyai/orca')}/releases/latest/download`
       })
     }
     if (this.autoUpdaterInitialized) {
