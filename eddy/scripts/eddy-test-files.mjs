@@ -46,6 +46,6 @@ export function selectEddyTestFiles(testFiles, hookedFiles) {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const testFiles = git(['ls-files', '--', 'src/*.test.ts', 'src/*.test.tsx'])
-  const hookedFiles = git(['grep', '-l', '-E', '(//|;|#) eddy:', '--', 'src'])
+  const hookedFiles = git(['grep', '-l', '-E', '(//|;|#|/\\*) eddy:', '--', 'src'])
   console.log(selectEddyTestFiles(testFiles, hookedFiles).join('\n'))
 }

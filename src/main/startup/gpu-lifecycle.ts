@@ -25,6 +25,7 @@ import {
 } from './windows-install-dir-acl-recovery'
 import { mainProcessState as state, gpuFallbackEnvironment } from './main-process-state'
 import { createGpuAccelerationAboutPanelOptions } from '../menu/gpu-acceleration-about-panel'
+import { eddyVersionLabel } from '../../shared/eddy/eddy-build'
 
 export function createGpuCrashDiagnosticsRecorder(): GpuCrashDiagnosticsRecorder | null {
   if (process.platform !== 'win32') {
@@ -43,7 +44,7 @@ export function updateGpuAccelerationAboutPanel(): void {
   app.setAboutPanelOptions(
     createGpuAccelerationAboutPanelOptions({
       appName: app.name,
-      appVersion: app.getVersion(),
+      appVersion: eddyVersionLabel(app.getVersion()), // eddy: "0.1.1 alpha (Orca 1.4.230)"
       platform: process.platform,
       gpuFallbackActive: state.gpuFallbackActiveThisLaunch,
       gpuFeatureStatus: state.gpuFeatureStatus

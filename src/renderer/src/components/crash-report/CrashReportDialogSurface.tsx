@@ -22,6 +22,7 @@ import {
 } from '../../../../shared/crash-reporting'
 import type { GitHubViewer } from '../../../../shared/github/pull-request-types'
 import { translate } from '@/i18n/i18n'
+import { ORCA_FEATURE_DISABLED, orcaFeatureLabel } from '@/eddy/orca-feature'
 import {
   CRASH_REPORT_SUBMIT_FAILURE_TOAST_ID,
   getCrashReportCopySubmissionFailure,
@@ -340,9 +341,18 @@ export function CrashReportDialogSurface({
           >
             {translate('auto.components.crash.report.CrashReportDialog.88fea8e84e', "Don't Send")}
           </Button>
-          <Button type="button" size="sm" onClick={handleSubmit} disabled={loading || submitting}>
+          <Button
+            type="button"
+            size="sm"
+            onClick={handleSubmit}
+            // eddy: crash reports are never sent from eddy release builds.
+            disabled={loading || submitting || ORCA_FEATURE_DISABLED}
+            title={ORCA_FEATURE_DISABLED ? orcaFeatureLabel('Send Report') : undefined}
+          >
             <Send className="size-3.5" />
-            {translate('auto.components.crash.report.CrashReportDialog.b4951cd27c', 'Send Report')}
+            {orcaFeatureLabel(
+              translate('auto.components.crash.report.CrashReportDialog.b4951cd27c', 'Send Report')
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

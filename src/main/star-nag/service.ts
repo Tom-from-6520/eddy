@@ -1,5 +1,6 @@
 import { BrowserWindow, ipcMain } from 'electron'
 import { STAR_NAG_INITIAL_THRESHOLD } from '../../shared/constants'
+import { isEddyBuild } from '../../shared/eddy/eddy-build'
 import { checkOrcaStarred } from '../github/client'
 import type { Store } from '../persistence'
 import type { StatsCollector } from '../stats/collector'
@@ -174,6 +175,10 @@ export class StarNagService {
     mode: StarNagPromptMode,
     surface: StarNagSurface = 'card'
   ): boolean {
+    // eddy: no "star the repo" prompt in eddy release builds.
+    if (isEddyBuild()) {
+      return false
+    }
     const win = BrowserWindow.getAllWindows().find((w) => !w.isDestroyed())
     if (!win) {
       this.promptVisible = false
