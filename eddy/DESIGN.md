@@ -3,7 +3,7 @@
 > **Committed and public.** Unlike eddy's design doc, this one contains no employer-internal details, so it lives in the repo. Keep it that way: no internal tool names, cluster URLs, tokens or machine paths.
 > **How to use:** read §1–4 for what eddy-omega is and why it's built on Orca, §5 for how it maps onto Orca, §11 for what's next. When you decide something, add a row to §13 and update the affected section.
 > **Lineage:** eddy-omega carries the design of [eddy](https://github.com/Tom-from-6520/eddy) (a VS Code fork). Decisions that still hold are copied into §13; eddy's own docs are history only.
-> Last updated: 2026-10-19 (pre-0.1.0; base `upstream/v1.4.230`).
+> Last updated: 2026-10-20 (eddy omega 0.1.0 alpha; base `upstream/v1.4.230`).
 
 ---
 
@@ -151,8 +151,9 @@ Orca talks to Stably/Orca services. Our builds must make a deliberate choice for
 8. If continuing: services (§9), separate `~/.orca` (Q-I1), signing, show `eddyVersion` in Settings/About.
 
 ### 11a. Verification status (CI/CD)
-- Local: eddy build-script tests (`node --test`), `oxlint` and `oxfmt` on the changed files. Type-check and vitest run only in CI (this machine can't install Orca's dependencies).
-- CI and the first real release/update: see the latest `eddy-checks` / `eddy-build` runs. **Not yet verified by hand: installing a release and updating to the next one.**
+- 10-20: `eddy-checks` green (type-check of ~16.6k files, lint/format of changed files, 36 test files + eddy build-script tests). `eddy-build` green on Windows x64 and Linux x64; the build verifies the packaged app is `eddy-omega` with `eddyVersion` and Orca's internal version.
+- **v0.1.0 published** (full release, built-in Actions token; no `EDDY_RELEASE_TOKEN` needed). The atom feed, `/releases/latest/download/latest.yml` and `latest-linux.yml` resolve with `version: 0.1.0`.
+- **Not yet verified by hand:** installing 0.1.0 (Windows, AppImage, .deb) and updating to the next release (0.1.1). Do this first on the personal machine.
 
 ## 12. Open questions
 

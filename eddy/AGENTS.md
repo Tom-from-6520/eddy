@@ -79,7 +79,7 @@ eddy omega differs from Orca only in **release builds**: `EDDY_RELEASE_BUILD=1` 
 - **`eddy-build.yml`**: a `v<eddyVersion>` tag builds Windows x64 (NSIS installer, self-updating) and Linux x64 (AppImage, self-updating; `.deb`) and publishes a GitHub release with `SHA256SUMS.txt`. Run it manually (Actions → eddy build → Run workflow) to build without releasing; installers stay as run artifacts for 14 days.
 - **Release:** set `eddyVersion` in `eddy/product.json`, commit ("Release 0.1.1"), push, then `git tag v0.1.1; git push origin v0.1.1`. The workflow checks the tag matches `eddyVersion`.
 - Releases are **full releases, not pre-releases** (the updater's fallback reads `/releases/latest`, which skips pre-releases); the stage is in the title. Publishing creates a draft first, then publishes it, so installed builds never see a half-uploaded release.
-- Publishing uses `secrets.EDDY_RELEASE_TOKEN` if set (fine-grained, Contents: read and write on this repo), else the built-in token.
+- Publishing uses the built-in Actions token (works on this repo); `secrets.EDDY_RELEASE_TOKEN` (fine-grained, Contents: read and write) takes precedence if set.
 
 ## Supply chain
 
