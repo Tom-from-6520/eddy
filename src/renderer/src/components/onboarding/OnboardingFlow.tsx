@@ -230,10 +230,10 @@ export default function OnboardingFlow({
                 src={logo}
                 alt=""
                 aria-hidden="true"
-                className="h-7 w-auto shrink-0 invert dark:invert-0"
+                className="h-7 w-auto shrink-0"
               />
               <span>
-                {translate('auto.components.onboarding.OnboardingFlow.a249f81538', 'Orca')}
+                {translate('auto.components.onboarding.OnboardingFlow.a249f81538', 'eddy')}
               </span>
             </div>
 
