@@ -8,7 +8,7 @@ export const EDDY_BUILD_VERSION: string | null =
   typeof EDDY_VERSION === 'string' && EDDY_VERSION.length > 0 ? EDDY_VERSION : null
 
 export const EDDY_RELEASE_REPO = 'Tom-from-6520/eddy-omega'
-export const EDDY_APP_NAME = 'eddy omega'
+export const EDDY_APP_NAME = 'eddy'
 export const EDDY_APP_USER_MODEL_ID = 'dev.eddy.omega'
 /** Folder name for eddy omega's machine-local data (e.g. under %LOCALAPPDATA%). */
 export const EDDY_LOCAL_DATA_DIR_NAME = 'eddy-omega'
