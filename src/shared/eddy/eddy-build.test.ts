@@ -12,7 +12,7 @@ describe('eddy build switches', () => {
     expect(EDDY_BUILD_VERSION).toBeNull()
     expect(isEddyBuild()).toBe(false)
     expect(eddyAwareReleaseRepo('stablyai/orca')).toBe('stablyai/orca')
-    expect(eddyAwareIdentity('Orca', 'eddy omega')).toBe('Orca')
+    expect(eddyAwareIdentity('Orca', 'eddy')).toBe('Orca')
   })
 
   it('names the eddy-omega release repo', () => {

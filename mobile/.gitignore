@@ -12,6 +12,7 @@ dist/
 *.p12
 *.key
 *.mobileprovision
+google-services.json
 *.orig.*
 web-build/
 

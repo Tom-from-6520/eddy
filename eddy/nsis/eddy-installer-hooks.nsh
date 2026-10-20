@@ -23,7 +23,7 @@
 !macro EDDY_REGISTER_DOCUMENT_PROGID PROGID NAME
   WriteRegStr SHELL_CONTEXT "Software\Classes\${PROGID}" "" "${NAME}"
   WriteRegStr SHELL_CONTEXT "Software\Classes\${PROGID}\DefaultIcon" "" "$appExe,0"
-  WriteRegStr SHELL_CONTEXT "Software\Classes\${PROGID}\shell\open" "" "Open with eddy omega"
+  WriteRegStr SHELL_CONTEXT "Software\Classes\${PROGID}\shell\open" "" "Open with eddy"
   WriteRegStr SHELL_CONTEXT "Software\Classes\${PROGID}\shell\open\command" "" '"$appExe" "%1"'
 !macroend
 
