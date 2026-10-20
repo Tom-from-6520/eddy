@@ -121,7 +121,7 @@ Details and commands: [`eddy/AGENTS.md`](./AGENTS.md).
 - **Signing:** Orca signs Windows builds via SignPath Foundation. eddy builds are unsigned (SmartScreen warns); the packaging drops Orca's `publisherName` so electron-updater doesn't reject unsigned eddy installers. Later: eddy's own SignPath (OSS) project or certificate, then restore a `publisherName`.
 - **Identity (Q-N1 decided 10-19: "eddy omega").** App id `dev.eddy.omega`; name `eddy-omega` (install folder, Electron data folder `%APPDATA%\eddy-omega`, `/opt/eddy-omega`, Linux WM class); display name "eddy" (shortcuts, Start menu, desktop entry, window/app name; app icon is eddy's pinwheel, `resources/build/icon.*`); `%LOCALAPPDATA%\eddy-omega` for the relocated terminal daemon; `/usr/bin/eddy-omega`; own document ProgIDs; protocol `eddy-omega://`. Implemented in `eddy/build/eddy-electron-builder.cjs` (wraps Orca's electron-builder config), `eddy/nsis/eddy-installer-hooks.nsh`, `eddy/linux/after-*.sh`, and hooks in `dev-instance-identity.ts` and `daemon-host-relocation.ts`.
 - **Still shared with Orca** (fine unless both are installed and used on one machine):
-  - `~/.orca` and the per-repo `.orca/` + `orca.yaml`: **decided 10-20 to move to `~/.eddy`, `.eddy/` and `eddy.yaml`** (§9.1; to build).
+  - `~/.orca` and the per-repo `.orca/`: **moved to `~/.eddy` and `.eddy/` (10-20, §9.1)**; `orca.yaml` → `eddy.yaml` pending (W-S2c).
   - Executable names: `Orca.exe` on Windows (Orca's Rust CLI launcher looks for it), `orca-ide` on Linux, the `orca` / `orca-ide` CLI commands (Q-I1).
   - The eddy uninstaller doesn't kill a running eddy terminal daemon (Orca's kills by image name, which would also hit Orca's); a leftover `%LOCALAPPDATA%\eddy-omega` may remain.
   - `orca://` deep links in app code; Orca's `agent-state-rules` live update still reads Orca's releases (data, harmless).
@@ -140,21 +140,23 @@ Orca talks to Stably/Orca services. Decisions for eddy release builds (UI entry 
 | Mobile companion (relay, push), Orca account (login), share/publish links, skill sharing | `relay*/push/login/share.onorca.dev`; UI: sidebar Mobile button (`SidebarNav.tsx`), `MobilePage`, `OrcaAccountSettingsPane`, `ShareSkillsSettingsPane`, `ArtifactPublishButton`, `doc-preview-artifact-share`, `EditorPanelHeader`, browser toolbars, `NativeChatInlineVisual`, skill install dialogs | **Disabled for now.** Buttons stay visible but disabled, with **"(orca feat)"** appended to their title/tooltip, so we remember to replace or remove them later. ~8–10 small UI hooks. |
 | Update feed, changelog | `github.com/stablyai/orca/releases`, `onorca.dev/whats-new/changelog.json` | **eddy-omega's releases** (done, §8); Orca's changelog off. |
 
-### 9.1 Home and repo folders (decided 10-20, to build as W-S2)
+### 9.1 Home and repo folders (decided 10-20; `~/.eddy` and `.eddy/` built 10-20 as W-S2a/b, `eddy.yaml` pending as W-S2c)
 
 **`~/.orca` → `~/.eddy`.** `~/.eddy` is also the VS Code-based eddy's data folder (`extensions/`, `argv.json`); no file names clash. What eddy omega keeps there:
 
 | What | Files | Notes |
 |---|---|---|
-| Agent-hook scripts | `agent-hooks/` (Claude, Codex, Gemini, Cursor, Copilot, Grok, …), install lock, `grok-owners`, `claude-agent-teams-bin/` | Each agent CLI's **global** config (e.g. `~/.claude/settings.json`) gets a hook entry pointing at these scripts; that is how Orca knows an agent is working/idle/waiting. Events go to whichever app launched the agent (`ORCA_AGENT_HOOK_PORT/TOKEN/ENDPOINT` in that terminal), not to the script's owner. **Check while building:** with Orca also installed, both apps register an entry, so each hook may fire twice; and how Orca cleans up entries it doesn't own. |
-| Credentials and API keys | Bitbucket, Jira, Linear, MiniMax cookies, OpenAI (speech) key, ZCode key, the encrypted API-key store, `orcad` secret key | Encrypted with the OS secret store. After the move you sign in again once in eddy omega; Orca's copies stay in `~/.orca`. |
-| Keybindings | `keybindings.json` | Orca's format. Not shared with the VS Code eddy in practice: VS Code keeps its keybindings in `%APPDATA%\eddy\User\` in another format. |
-| Headless server (`orcad`) data | user data, e2ee keypair, profile-state access | Only when running `orca serve` / remote runtimes. |
-| Remote hosts (SSH, WSL) | `~/.orca` on the remote: deployed runtime, hook scripts | Becomes `~/.eddy` on the remote too. |
+| Agent-hook scripts | `agent-hooks/` (Claude, Codex, Gemini, Cursor, Copilot, Grok, …), install lock, `grok-owners`, `claude-agent-teams-bin/` | Each agent CLI's **global** config (e.g. `~/.claude/settings.json`) gets a hook entry pointing at these scripts; that is how Orca knows an agent is working/idle/waiting. Events go to whichever app launched the agent (`ORCA_AGENT_HOOK_PORT/TOKEN/ENDPOINT` in that terminal), not to the script's owner. Orca recognises its entries by `agent-hooks/<script>` whatever the folder, so eddy replaces the old `~/.orca` entries (from eddy 0.1.x or Orca) instead of adding duplicates; if Orca also runs, it takes them back. Either script works for either app. |
+| Credentials and API keys | Bitbucket, Jira, Linear, MiniMax cookies, OpenAI (speech) key, ZCode key, the encrypted API-key store, `orcad` secret key | Encrypted with the OS secret store. After the move you sign in again once in eddy omega; old copies stay in `~/.orca`. |
+| Keybindings | `keybindings.json` | Orca's format. Not shared with the VS Code eddy in practice: VS Code keeps its keybindings in `%APPDATA%\eddy\User\` in another format. Not migrated: copy `~/.orca/keybindings.json` by hand if you customised it. |
+| Headless server (`orcad`) data | user data (`$XDG_DATA_HOME/eddy` or `~/.eddy`), e2ee keypair, profile-state access | Only when running `orca serve` / remote runtimes. The `orcad` esbuild bundle gets the eddy constants too (`config/scripts/orcad-entry-build.mjs`). |
+| Remote hosts (SSH, WSL) | `~/.orca` on the remote: deployed runtime, hook scripts | `~/.eddy` on the remote too. |
 
-Scope: ~40 lines in ~35 files (a shared `EDDY_HOME_DIR` constant via `eddyAwareIdentity('.orca', '.eddy')`). Shell/PowerShell hook command strings embed the path, so test hooks by hand on Windows, WSL and one SSH host.
+Built as `APP_HOME_DIR_NAME` / `REPO_DATA_DIR_NAME` in `src/shared/eddy/eddy-build.ts` (`.orca` outside eddy builds), used in ~50 files; each has an import marked `// eddy:`. **Test by hand:** agent hooks on Windows, WSL and one SSH host (the shell/PowerShell hook commands embed the path).
 
-**Per-repo `.orca/` → `.eddy/`, `orca.yaml` → `eddy.yaml`.** `.orca/` holds dropped files, markdown templates, issue commands and browser downloads, and is added to `.gitignore`. `orca.yaml` is the committable project config (setup scripts, hooks); proposal: read `eddy.yaml` and fall back to `orca.yaml`, so repos set up for Orca still work. ~10 code sites for each; UI strings via W-B1.
+**Per-repo `.orca/` → `.eddy/` (built).** Dropped files, markdown templates, issue commands and browser downloads; `.eddy` is added to the repo's `.gitignore`.
+
+**`orca.yaml` → `eddy.yaml` (W-S2c, pending).** The committable project config (setup scripts, hooks). It is read in `src/main/hooks.ts`, over SSH, by worktree setup and the trust dialog, and by the CLI (compiled without the eddy switch); its name also appears in many UI strings. Plan: read `eddy.yaml` if present, else `orca.yaml`, in every build (Orca never writes `eddy.yaml`, so no switch is needed), together with the UI rebranding hook W-B1.
 
 ## 10. Security and supply chain
 
@@ -171,7 +173,7 @@ Scope: ~40 lines in ~35 files (a shared `EDDY_HOME_DIR` constant via `eddyAwareI
 3. ~~**T1 — Updater by hand**~~ — 10-20: installed 0.1.0 (Windows user setup), it updated itself to 0.1.1 (installed `eddyVersion` 0.1.1, installer fetched from eddy-omega's release). Building from source on the personal machine is still to do.
 4. ~~**W-S1 — Orca services**~~ (§9) — 10-20: feedback/crash blocked, star prompt off, eddy-hosted update nudges, "(orca feat)" disabled buttons; About/Settings show `eddyVersion`.
 5. **T2 — Orca study** (§1.1): use eddy omega for real work for a few days and read the code behind what you use, then write **§5.1 "Orca's model"** in Orca's own terms: projects/repos/workspaces, the sidebar, tabs/splits and layout (answers Q-L1), native chat sessions (how many per workspace, history), file explorer and source control (what drives them), keybindings and the command palette, settings/profiles. End with a gap list: each need in §3–4 → "Orca already does it", "small change to an Orca concept", or "new concept".
-6. **W-S2 — `~/.eddy`, `.eddy/`, `eddy.yaml`** (§9.1). After T1, because agent hooks must be tested by hand.
+6. **W-S2 — folders** (§9.1): ~~`~/.eddy` (W-S2a)~~ and ~~`.eddy/` (W-S2b)~~ built 10-20; test agent hooks by hand (Windows, WSL, SSH). `eddy.yaml` (W-S2c) together with W-B1.
 7. **T3 — First change in Orca's terms:** the smallest gap from T2 that makes Orca feel like §3–4 (replacing the old "Working Context spike"). It must work with Orca's file explorer, source control, layout and keybindings. **Measure the upstream files touched and hook lines added.**
 8. **W3 — Copilot CLI as an ACP native chat** (§6).
 9. **Upstream sync** onto the newest stable Orca tag (after W-S1 and again after T3) to measure rebase cost.
@@ -194,7 +196,7 @@ Scope: ~40 lines in ~35 files (a shared `EDDY_HOME_DIR` constant via `eddyAwareI
 - **Q-UI1** MCP / skills panels and placement of explorer/git: decide later (O16).
 - **Q8** MCP source of truth: eddy catalog vs. per-agent config.
 - **Q-X1** Should contexts sync across machines? Not needed yet.
-- **Q-Y1** `eddy.yaml`: fall back to `orca.yaml` when absent (proposed), or `eddy.yaml` only?
+- **Q-Y1** `eddy.yaml`: read `eddy.yaml`, else `orca.yaml`, in every build (proposed, §9.1), or `eddy.yaml` only?
 
 ## 13. Decision log
 
