@@ -12,6 +12,7 @@ import { createViteCacheRetentionPlugin } from './config/build-plugins/vite-cach
 import { MAIN_BUILD_ENTRY_POINTS } from './config/build-plugins/main-build-entry-points'
 import { createPlainNodeEntryGuardPlugin } from './config/build-plugins/plain-node-entry-guard'
 import { resolveBuildSourceCommit } from './config/scripts/build-source-commit.mjs'
+import { eddyViteDefines } from './eddy/build/eddy-vite-defines.mjs' // eddy: build-time constants
 
 const BUNDLED_MAIN_DEPENDENCIES = new Set([
   'stream-json',
@@ -268,7 +269,8 @@ export const electronViteConfig: UserConfig = {
       ORCA_POSTHOG_WRITE_KEY: ORCA_POSTHOG_WRITE_KEY_LITERAL,
       ORCA_DIAGNOSTICS_TOKEN_URL: ORCA_DIAGNOSTICS_TOKEN_URL_LITERAL,
       ORCA_BUILD_COMMIT: ORCA_BUILD_COMMIT_LITERAL,
-      ...DARK_BUILD_DEFINES
+      ...DARK_BUILD_DEFINES,
+      ...eddyViteDefines() // eddy: eddy omega identity/updater switch
     },
     // Why: @xterm/headless declares "exports": null in package.json, which
     // prevents Vite's default resolver from finding the CJS entry. Point
@@ -294,7 +296,8 @@ export const electronViteConfig: UserConfig = {
     cacheDir: resolve('.cache/vite/renderer'),
     define: {
       ORCA_BUILD_COMMIT: ORCA_BUILD_COMMIT_LITERAL,
-      ...DARK_BUILD_DEFINES
+      ...DARK_BUILD_DEFINES,
+      ...eddyViteDefines() // eddy: release-notes links use eddy-omega's repo
     },
     resolve: {
       alias: {

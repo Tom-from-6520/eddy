@@ -1,4 +1,5 @@
 import { compareAppVersions, isValidAppVersion } from './app-version'
+import { eddyAwareReleaseRepo } from './eddy/eddy-build'
 
 export type ReleaseChannel = 'stable' | 'rc' | 'hourly' | 'daily' | 'adhoc'
 
@@ -111,7 +112,8 @@ export function requiresManualDevChannelInstall(options: {
 }
 
 export function getReleaseRepoForChannel(channel: ReleaseChannel): string {
-  return CHANNEL_RELEASE_REPOS[channel]
+  // eddy: every channel resolves to eddy-omega's releases in eddy release builds.
+  return eddyAwareReleaseRepo(CHANNEL_RELEASE_REPOS[channel])
 }
 
 export function normalizeTagToVersion(tag: string): string {
@@ -228,7 +230,8 @@ export function getVersionChannel(version: string): ReleaseChannel | null {
  */
 export function getReleaseNotesUrlForVersion(version: string | null): string {
   const channel = version ? getVersionChannel(version) : null
-  const repo = channel ? getReleaseRepoForChannel(channel) : MAIN_RELEASE_REPO
+  // eddy: was MAIN_RELEASE_REPO, which ignores eddy release builds.
+  const repo = channel ? getReleaseRepoForChannel(channel) : getReleaseRepoForChannel('stable')
   return version
     ? `https://github.com/${repo}/releases/tag/v${normalizeTagToVersion(version)}`
     : `https://github.com/${repo}/releases`

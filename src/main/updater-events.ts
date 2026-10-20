@@ -1,4 +1,6 @@
-import { app } from 'electron'
+// eddy: updates compare eddyVersion in eddy release builds.
+import { getUpdaterAppVersion } from './eddy/eddy-updater-version'
+import { isEddyBuild } from '../shared/eddy/eddy-build'
 import {
   isMacInstallerReady,
   registerMacUpdaterEvents,
@@ -102,7 +104,7 @@ export function registerAutoUpdaterHandlers({
     if (
       !isLocalBuildCheck() &&
       !isPinnedBuildCheck() &&
-      compareVersions(info.version, app.getVersion()) <= 0
+      compareVersions(info.version, getUpdaterAppVersion()) <= 0
     ) {
       clearAvailableUpdateContext()
       if (missingManifestFallback || publishingWindowLastGoodCheck) {
@@ -132,9 +134,10 @@ export function registerAutoUpdaterHandlers({
     void (async () => {
       try {
         const changelog =
-          isLocalBuildCheck() || isPinnedBuildCheck()
+          // eddy: Orca's changelog doesn't describe eddy omega releases.
+          isLocalBuildCheck() || isPinnedBuildCheck() || isEddyBuild()
             ? null
-            : await fetchChangelog(info.version, app.getVersion()).catch(() => null)
+            : await fetchChangelog(info.version, getUpdaterAppVersion()).catch(() => null)
 
         // Why: async fetch may take seconds; bail if a newer event superseded this attempt to avoid a stale 'available' broadcast.
         if (!isActiveUpdateCheckAttempt(attemptId)) {
@@ -241,7 +244,7 @@ export function registerAutoUpdaterHandlers({
     if (
       !isLocalBuildCheck() &&
       !isPinnedBuildCheck() &&
-      compareVersions(info.version, app.getVersion()) <= 0
+      compareVersions(info.version, getUpdaterAppVersion()) <= 0
     ) {
       clearAvailableUpdateContext()
       linuxPackageRecovery.clearTrackedLinuxPackageArtifact()
