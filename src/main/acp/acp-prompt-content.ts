@@ -26,6 +26,7 @@ import { acpAgentName } from './acp-structured-agent-definitions'
 import type { AcpStructuredConnection } from './acp-structured-connection'
 import { acpSessionAcceptsImages } from './acp-structured-options'
 import type { ContentBlock } from './generated/acp-protocol.generated'
+import { sendsWithheldAcpCommand } from '../eddy/acp-ask-guard' // eddy: withheld commands
 
 const ACP_IMAGE_MIME_TYPES = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp'])
 /** A prompt is one JSON-RPC line; this leaves room for the request around its blocks. */
@@ -187,11 +188,10 @@ export async function acpPromptBlocks(
   return blocks
 }
 
-/** A message that is only one of the dialect's withheld commands, with no attachment. */
+/** A message that runs one of the dialect's withheld commands. */
 function isWithheldCommand(body: AgentJournalMessageItem, withheld: readonly string[]): boolean {
-  const [block, ...rest] = body.blocks
-  const text = block?.type === 'text' && rest.length === 0 ? block.text.trim() : ''
-  return text.startsWith('/') && withheld.includes(text.slice(1))
+  // eddy: any text block naming one, arguments or not (src/main/eddy/acp-ask-guard.ts).
+  return sendsWithheldAcpCommand(body, withheld)
 }
 
 /** The prompt for `body` to `session`'s agent, or Orca's refusal of it in words that name the
