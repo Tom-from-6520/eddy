@@ -97,8 +97,8 @@ function reportedAskWrites(guard: AcpAskGuard, event: AcpSessionEvent): AskWrite
 
 type AskGuardedSession = Pick<
   AcpStructuredSession,
-  'sessionId' | 'spec' | 'connection' | 'options' | 'lane'
->
+  'sessionId' | 'spec' | 'connection' | 'options'
+> & { lane: AcpStructuredSession['lane'] | null }
 
 async function restoreAsk(
   session: AskGuardedSession,
@@ -134,7 +134,7 @@ export async function guardAcpAsk(
   try {
     await restoreAsk(session, guard, acpAskWrites(guard, session.options.readConfigOptions()))
   } catch (error) {
-    session.lane.dispose()
+    session.lane?.dispose()
     throw new Error(`${agentName} could not be kept on Ask`, { cause: error })
   }
   const fields = { scope: 'eddy-acp-ask-guard', sessionId: session.sessionId }
