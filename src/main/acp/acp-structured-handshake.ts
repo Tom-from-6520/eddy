@@ -12,6 +12,7 @@ import {
   acpReopenTakeover,
   acpSessionNotRestoredRow
 } from './acp-session-reopen-failure'
+import { guardAcpAsk } from '../eddy/acp-ask-guard' // eddy: Ask guard (O19)
 import { ACP_HANDLE_TRANSPORT, acpAgentName } from './acp-structured-agent-definitions'
 import { probeAcpChildStops } from './acp-structured-child-stop'
 import type { AcpStructuredConnection } from './acp-structured-connection'
@@ -117,6 +118,8 @@ export async function initializeAcpStructuredSession(
       started.kind === 'new' ? 'new' : 'loaded'
     )
   }
+  await guardAcpAsk(child, acquire.permissionMode, deps.logger) // eddy: Ask guard (O19)
+  assertStarting()
   const link: AgentSessionProviderHandleLink = {
     linkId:
       deps.mintLinkId?.() ?? `${spec.agent}-${acquire.fence}-${started.sessionId}`.slice(0, 128),
