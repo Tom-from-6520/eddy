@@ -154,7 +154,17 @@ import {
   structuredWorkerProcessIncarnation
 } from './structured-worker-identity'
 
-const AGENTS = ['claude', 'codex', 'grok', 'opencode', 'omp', 'pi', 'antigravity'] as const
+// A new agent goes last: its cases then shift only the configured ones' session ids.
+const AGENTS = [
+  'claude',
+  'codex',
+  'grok',
+  'opencode',
+  'omp',
+  'pi',
+  'antigravity',
+  'copilot'
+] as const
 type Agent = (typeof AGENTS)[number]
 
 /** What each fake binary prints for `--version`: a release every launch gate accepts. */
@@ -165,7 +175,9 @@ const VERSIONS: Record<Agent, string> = {
   opencode: '2.0.20',
   omp: '17.1.0',
   pi: '1.1.0',
-  antigravity: '1.3.0'
+  antigravity: '1.3.0',
+  // The CLI's verbatim form, trailing sentence period included.
+  copilot: 'GitHub Copilot CLI 1.0.98.'
 }
 /** An agent whose binary is not named after it. */
 const BINARIES: Partial<Record<Agent, string>> = { antigravity: 'agy_acp_server.par' }
@@ -280,7 +292,8 @@ function configuredSettings(): Partial<GlobalSettings> {
       opencode: '',
       omp: '',
       pi: '',
-      antigravity: ''
+      antigravity: '',
+      copilot: ''
     },
     agentDefaultEnv: Object.fromEntries(
       AGENTS.map((agent) => [
@@ -349,6 +362,8 @@ function accountHomeFor(agent: Agent): AgentSessionAccountHome {
       return { kind: 'opencode', locator: { kind: 'unmanaged' } }
     case 'omp':
       return { variable: 'PI_CODING_AGENT_DIR', path: directory('omp') }
+    case 'copilot':
+      return { variable: 'COPILOT_HOME', path: directory('copilot') }
     case 'pi':
       return { variable: 'PI_CODING_AGENT_DIR', path: directory('pi') }
     case 'antigravity':
@@ -376,6 +391,7 @@ async function resumedHandleFor(
     case 'opencode':
     case 'omp':
     case 'antigravity':
+    case 'copilot':
       return { transport: 'acp', agent, nativeId: `acp-session-${sessionId}` }
   }
 }
