@@ -81,7 +81,7 @@ index 1ac5758bedd8cf54f32280dea4e4aeb5afdee30d..e619813759c6f14694838bdfbd0ea5f8
 +++ b/deps/winpty/src/winpty.gyp
 @@ -10,7 +10,7 @@
      #    make -j4 CXX=i686-w64-mingw32-g++ LDFLAGS="-static -static-libgcc -static-libstdc++"
-
+ 
      'variables': {
 -        'WINPTY_COMMIT_HASH%': '<!(cmd /c "cd shared && GetCommitHash.bat")',
 +        'WINPTY_COMMIT_HASH%': '<!(cmd /c "cd shared && .\\GetCommitHash.bat")',
@@ -283,7 +283,7 @@ index 181ccabbbe9c4948a9725fb1db907a68e9de01fc..67f31facf85562b67adbfbd04ce28ddd
 --- a/src/conpty_console_list_agent.ts
 +++ b/src/conpty_console_list_agent.ts
 @@ -10,6 +10,12 @@ import { loadNativeModule } from './utils';
-
+ 
  const getConsoleProcessList = loadNativeModule('conpty_console_list').module.getConsoleProcessList;
  const shellPid = parseInt(process.argv[2], 10);
 -const consoleProcessList = getConsoleProcessList(shellPid);
@@ -308,12 +308,12 @@ index 7b4b9e1f990fbf95b51528bb56dc9717f5b87532..2ae787c5bd4f3eba470584dc658a01a5
  #include <unistd.h>
 +#include <string>
  #include <thread>
-
+ 
  #include <sys/types.h>
 @@ -47,6 +49,25 @@
  #include <termios.h>
  #endif
-
+ 
 +/* Orca: glibc 2.32-2.34 relocated pthread_sigmask/openpty/forkpty into libc
 + * under new symbol versions, so building on a newer glibc produces references
 + * (GLIBC_2.32/2.34) absent on Ubuntu 20.04 (glibc 2.31) and the app fails to
@@ -339,7 +339,7 @@ index 7b4b9e1f990fbf95b51528bb56dc9717f5b87532..2ae787c5bd4f3eba470584dc658a01a5
 @@ -228,6 +249,9 @@ Napi::Value PtyGetProc(const Napi::CallbackInfo& info);
  static int
  pty_nonblock(int);
-
+ 
 +static int
 +pty_cloexec(int);
 +
@@ -348,7 +348,7 @@ index 7b4b9e1f990fbf95b51528bb56dc9717f5b87532..2ae787c5bd4f3eba470584dc658a01a5
  pty_getproc(int);
 @@ -237,13 +261,23 @@ pty_getproc(int, char *);
  #endif
-
+ 
  #if defined(__APPLE__) || defined(__OpenBSD__)
 +struct pty_spawn_error {
 +  const char* step;
@@ -369,12 +369,12 @@ index 7b4b9e1f990fbf95b51528bb56dc9717f5b87532..2ae787c5bd4f3eba470584dc658a01a5
 -                int* err);
 +                pty_spawn_error* err);
  #endif
-
+ 
  struct DelBuf {
 @@ -367,14 +401,18 @@ Napi::Value PtyFork(const Napi::CallbackInfo& info) {
      argv[i + 3] = strdup(arg.c_str());
    }
-
+ 
 -  int err = -1;
 -  pty_posix_spawn(argv, env, term, &winp, &master, &pid, &err);
 -  if (err != 0) {
@@ -403,11 +403,11 @@ index 7b4b9e1f990fbf95b51528bb56dc9717f5b87532..2ae787c5bd4f3eba470584dc658a01a5
 +      }
    }
  #endif
-
+ 
 @@ -586,6 +627,23 @@ pty_nonblock(int fd) {
    return fcntl(fd, F_SETFL, flags | O_NONBLOCK);
  }
-
+ 
 +/**
 + * Orca: close-on-exec FD
 + *
@@ -430,7 +430,7 @@ index 7b4b9e1f990fbf95b51528bb56dc9717f5b87532..2ae787c5bd4f3eba470584dc658a01a5
   * Taken from tmux.
 @@ -684,15 +742,73 @@ pty_getproc(int fd, char *tty) {
  #endif
-
+ 
  #if defined(__APPLE__)
 +static const char*
 +pty_errno_name(int errnum) {
@@ -501,7 +501,7 @@ index 7b4b9e1f990fbf95b51528bb56dc9717f5b87532..2ae787c5bd4f3eba470584dc658a01a5
 +  bool acts_initialized = false;
 +  posix_spawnattr_t attrs;
 +  bool attrs_initialized = false;
-
+ 
    for (; count < 3; count++) {
      low_fds[count] = posix_openpt(O_RDWR);
 @@ -706,80 +822,118 @@ pty_posix_spawn(char** argv, char** env,
@@ -512,7 +512,7 @@ index 7b4b9e1f990fbf95b51528bb56dc9717f5b87532..2ae787c5bd4f3eba470584dc658a01a5
 +    pty_set_spawn_error(err, "posix_openpt", errno);
 +    goto done;
    }
-
+ 
 -  int res = grantpt(*master) || unlockpt(*master);
 +  res = grantpt(*master);
    if (res == -1) {
@@ -526,7 +526,7 @@ index 7b4b9e1f990fbf95b51528bb56dc9717f5b87532..2ae787c5bd4f3eba470584dc658a01a5
 +    pty_set_spawn_error(err, "unlockpt", errno);
 +    goto done;
    }
-
+ 
    // Use TIOCPTYGNAME instead of ptsname() to avoid threading problems.
 -  int slave;
    char slave_pty_name[128];
@@ -536,14 +536,14 @@ index 7b4b9e1f990fbf95b51528bb56dc9717f5b87532..2ae787c5bd4f3eba470584dc658a01a5
 +    pty_set_spawn_error(err, "ioctl_TIOCPTYGNAME", errno);
 +    goto done;
    }
-
+ 
    slave = open(slave_pty_name, O_RDWR | O_NOCTTY);
    if (slave == -1) {
 -    return;
 +    pty_set_spawn_error(err, "open_slave", errno, "slave", slave_pty_name);
 +    goto done;
    }
-
+ 
    if (termp) {
      res = tcsetattr(slave, TCSANOW, termp);
      if (res == -1) {
@@ -552,7 +552,7 @@ index 7b4b9e1f990fbf95b51528bb56dc9717f5b87532..2ae787c5bd4f3eba470584dc658a01a5
 +      goto done;
      };
    }
-
+ 
    if (winp) {
      res = ioctl(slave, TIOCSWINSZ, winp);
      if (res == -1) {
@@ -561,7 +561,7 @@ index 7b4b9e1f990fbf95b51528bb56dc9717f5b87532..2ae787c5bd4f3eba470584dc658a01a5
 +      goto done;
      }
    }
-
+ 
 -  posix_spawn_file_actions_t acts;
 -  posix_spawn_file_actions_init(&acts);
 +  res = posix_spawn_file_actions_init(&acts);
@@ -575,7 +575,7 @@ index 7b4b9e1f990fbf95b51528bb56dc9717f5b87532..2ae787c5bd4f3eba470584dc658a01a5
    posix_spawn_file_actions_adddup2(&acts, slave, STDERR_FILENO);
    posix_spawn_file_actions_addclose(&acts, slave);
    posix_spawn_file_actions_addclose(&acts, *master);
-
+ 
 -  posix_spawnattr_t attrs;
 -  posix_spawnattr_init(&attrs);
 -  *err = posix_spawnattr_setflags(&attrs, flags);
@@ -591,7 +591,7 @@ index 7b4b9e1f990fbf95b51528bb56dc9717f5b87532..2ae787c5bd4f3eba470584dc658a01a5
 +    pty_set_spawn_error(err, "posix_spawnattr_setflags", res);
      goto done;
    }
-
+ 
    sigset_t signal_set;
    /* Reset all signal the child to their default behavior */
    sigfillset(&signal_set);
@@ -602,7 +602,7 @@ index 7b4b9e1f990fbf95b51528bb56dc9717f5b87532..2ae787c5bd4f3eba470584dc658a01a5
 +    pty_set_spawn_error(err, "posix_spawnattr_setsigdefault", res);
      goto done;
    }
-
+ 
    /* Reset the signal mask for all signals */
    sigemptyset(&signal_set);
 -  *err = posix_spawnattr_setsigmask(&attrs, &signal_set);
@@ -612,7 +612,7 @@ index 7b4b9e1f990fbf95b51528bb56dc9717f5b87532..2ae787c5bd4f3eba470584dc658a01a5
 +    pty_set_spawn_error(err, "posix_spawnattr_setsigmask", res);
      goto done;
    }
-
+ 
    do
 -    *err = posix_spawn(pid, argv[0], &acts, &attrs, argv, env);
 -  while (*err == EINTR);
@@ -637,7 +637,7 @@ index 7b4b9e1f990fbf95b51528bb56dc9717f5b87532..2ae787c5bd4f3eba470584dc658a01a5
 +    close(*master);
 +    *master = -1;
 +  }
-
+ 
 -  for (; count > 0; count--) {
 -    close(low_fds[count]);
 +  for (size_t i = 0; i <= count && i < 3; i++) {
@@ -654,7 +654,7 @@ index 98733dc0cd752b554bd94e45904ca341ad141bba..3dd5ad9b3124dbd5ba7f76679b26650d
 @@ -306,6 +306,14 @@ interface IWriteTask {
    offset: number;
  }
-
+ 
 +/**
 + * Orca: upstream retries EAGAIN with `setImmediate`, which re-attempts within microseconds
 + * and pins a core on the daemon thread when a reader stops draining. 1ms keeps ~97% of that
@@ -668,18 +668,18 @@ index 98733dc0cd752b554bd94e45904ca341ad141bba..3dd5ad9b3124dbd5ba7f76679b26650d
   * handling of backpressure and errors. This avoids some event loop exhaustion
 @@ -314,20 +322,28 @@ interface IWriteTask {
  class CustomWriteStream implements IDisposable {
-
+ 
    private readonly _writeQueue: IWriteTask[] = [];
 -  private _writeImmediate: NodeJS.Immediate | undefined;
 +  private _writeImmediate: NodeJS.Timeout | undefined;
-
+ 
    constructor(
 -    private readonly _fd: number,
 +    private _fd: number,
      private readonly _encoding: BufferEncoding
    ) {
    }
-
+ 
    dispose(): void {
 -    clearImmediate(this._writeImmediate);
 +    clearTimeout(this._writeImmediate);
@@ -689,7 +689,7 @@ index 98733dc0cd752b554bd94e45904ca341ad141bba..3dd5ad9b3124dbd5ba7f76679b26650d
 +    this._fd = -1;
 +    this._writeQueue.length = 0;
    }
-
+ 
    write(data: string | Buffer): void {
 +    if (this._fd < 0) {
 +      return;
@@ -701,13 +701,13 @@ index 98733dc0cd752b554bd94e45904ca341ad141bba..3dd5ad9b3124dbd5ba7f76679b26650d
 @@ -345,7 +361,8 @@ class CustomWriteStream implements IDisposable {
    private _processWriteQueue(): void {
      this._writeImmediate = undefined;
-
+ 
 -    if (this._writeQueue.length === 0) {
 +    // Orca: an in-flight fs.write can re-enter here after dispose().
 +    if (this._fd < 0 || this._writeQueue.length === 0) {
        return;
      }
-
+ 
 @@ -357,9 +374,9 @@ class CustomWriteStream implements IDisposable {
      fs.write(this._fd, task.buffer, task.offset, (err, written) => {
        if (err) {
@@ -726,8 +726,8 @@ index 81a70c77a18e25c50b26f0d80aa0e8d8c2672805..4bc8d760fe00e208f211570930cd163b
 --- a/src/utils.ts
 +++ b/src/utils.ts
 @@ -10,8 +10,8 @@ export function assign(target: any, ...sources: any[]): any {
-
-
+ 
+ 
  export function loadNativeModule(name: string): {dir: string, module: any} {
 -  // Check build, debug, and then prebuilds.
 -  const dirs = ['build/Release', 'build/Debug', `prebuilds/${process.platform}-${process.arch}`];
@@ -752,7 +752,7 @@ index 7b286d3d64..5239ba4e40 100644
 @@ -44,15 +46,39 @@ struct pty_baton {
    HANDLE hOut;
    HPCON hpc;
-
+ 
 -  HANDLE hShell;
 +  HANDLE hShell = nullptr;
 +  // Orca: the shell's pid, captured at spawn. The ownership guard compares
@@ -775,17 +775,17 @@ index 7b286d3d64..5239ba4e40 100644
 +  // leaked its pseudoconsole and the console host it reaps (#18601 / F24).
 +  bool shellExited = false;
 +  bool consoleClosed = false;
-
+ 
    pty_baton(int _id, HANDLE _hIn, HANDLE _hOut, HPCON _hpc) : id(_id), hIn(_hIn), hOut(_hOut), hpc(_hpc) {};
  };
-
+ 
  static std::vector<std::unique_ptr<pty_baton>> ptyHandles;
 +// Orca: every table access shares the exit watcher's lock; handles can be recycled.
 +static std::mutex ptyJobMutex;
 +// Orca: 0 = no per-terminal ceiling (the default); set once at daemon start.
 +static std::atomic<uint32_t> ptyActiveProcessLimit{0};
  static volatile LONG ptyCounter;
-
+ 
 -static pty_baton* get_pty_baton(int id) {
 +static pty_baton* get_pty_baton_locked(int id) {
    auto it = std::find_if(ptyHandles.begin(), ptyHandles.end(), [id](const auto& ptyHandle) {
@@ -794,7 +794,7 @@ index 7b286d3d64..5239ba4e40 100644
 @@ -62,7 +88,7 @@ static pty_baton* get_pty_baton(int id) {
    return nullptr;
  }
-
+ 
 -static bool remove_pty_baton(int id) {
 +static bool remove_pty_baton_locked(int id) {
    auto it = std::remove_if(ptyHandles.begin(), ptyHandles.end(), [id](const auto& ptyHandle) {
@@ -831,13 +831,13 @@ index 7b286d3d64..5239ba4e40 100644
 +    // Why the lock ends here: BlockingCall below waits on the JS thread, and the
 +    // JS thread can be waiting on ptyJobMutex inside PtyTerminateJob. Holding
 +    // the lock across it deadlocks. Do not widen this scope.
-
+ 
      auto status = tsfn.BlockingCall(exit_event, callback); // In main thread
      switch (status) {
 @@ -242,6 +291,20 @@ HRESULT CreateNamedPipesAndPseudoConsole(const Napi::CallbackInfo& info,
    return HRESULT_FROM_WIN32(GetLastError());
  }
-
+ 
 +// Cygwin and MSYS request breakaway for every child whenever the job allows it,
 +// so their shells need one that does not. The runtime DLL on the exe's search
 +// path is the signal; Git for Windows ships bash.exe in bin\ beside usr\bin\.
@@ -871,7 +871,7 @@ index 7b286d3d64..5239ba4e40 100644
 @@ -350,11 +415,15 @@ static Napi::Value PtyConnect(const Napi::CallbackInfo& info) {
    const bool useConptyDll = info[4].As<Napi::Boolean>().Value();
    Napi::Function exitCallback = info[5].As<Napi::Function>();
-
+ 
 -  // Fetch pty handle from ID and start process
 -  pty_baton* handle = get_pty_baton(id);
 -  if (!handle) {
@@ -885,13 +885,13 @@ index 7b286d3d64..5239ba4e40 100644
 +    }
    }
 +  // No watcher exists for this baton until SetupExitCallback below; pipe waits stay unlocked.
-
+ 
    // Prepare command line
    std::unique_ptr<wchar_t[]> mutableCommandline = std::make_unique<wchar_t[]>(cmdline.length() + 1);
 @@ -409,6 +478,15 @@ static Napi::Value PtyConnect(const Napi::CallbackInfo& info) {
      throw errorWithCode(info, "UpdateProcThreadAttribute failed");
    }
-
+ 
 +  // Orca: resolve the DLL BEFORE creating anything. It throws when conpty.dll
 +  // is missing -- a real state, and one this branch hit during development --
 +  // and every throw between CreateProcessW and SetupExitCallback leaks the job,
@@ -919,7 +919,7 @@ index 7b286d3d64..5239ba4e40 100644
 @@ -426,8 +507,54 @@ static Napi::Value PtyConnect(const Napi::CallbackInfo& info) {
      throw errorWithCode(info, "Cannot create process");
    }
-
+ 
 -  HANDLE hLibrary = LoadConptyDll(info, useConptyDll);
 -  bool fLoadedDll = hLibrary != nullptr;
 +  // Orca: own the tree with a handle instead of inferring it later from a
@@ -976,7 +976,7 @@ index 7b286d3d64..5239ba4e40 100644
 @@ -438,8 +565,12 @@ static Napi::Value PtyConnect(const Napi::CallbackInfo& info) {
      }
    }
-
+ 
 -  // Update handle
 -  handle->hShell = piClient.hProcess;
 +  {
@@ -985,17 +985,17 @@ index 7b286d3d64..5239ba4e40 100644
 +    handle->shellPid = piClient.dwProcessId;
 +    handle->hJob = hJob;
 +  }
-
+ 
    // Close the thread handle to avoid resource leak
    CloseHandle(piClient.hThread);
 @@ -472,9 +603,10 @@ static Napi::Value PtyResize(const Napi::CallbackInfo& info) {
    SHORT rows = static_cast<SHORT>(info[2].As<Napi::Number>().Uint32Value());
    const bool useConptyDll = info[3].As<Napi::Boolean>().Value();
-
+ 
 -  const pty_baton* handle = get_pty_baton(id);
 +  std::lock_guard<std::mutex> guard(ptyJobMutex);
 +  const pty_baton* handle = get_pty_baton_locked(id);
-
+ 
 -  if (handle != nullptr) {
 +  if (handle != nullptr && !handle->consoleClosed) {
      HANDLE hLibrary = LoadConptyDll(info, useConptyDll);
@@ -1004,11 +1004,11 @@ index 7b286d3d64..5239ba4e40 100644
 @@ -513,9 +645,10 @@ static Napi::Value PtyClear(const Napi::CallbackInfo& info) {
      return env.Undefined();
    }
-
+ 
 -  const pty_baton* handle = get_pty_baton(id);
 +  std::lock_guard<std::mutex> guard(ptyJobMutex);
 +  const pty_baton* handle = get_pty_baton_locked(id);
-
+ 
 -  if (handle != nullptr) {
 +  if (handle != nullptr && !handle->consoleClosed) {
      HANDLE hLibrary = LoadConptyDll(info, useConptyDll);
@@ -1017,7 +1017,7 @@ index 7b286d3d64..5239ba4e40 100644
 @@ -544,29 +677,229 @@ static Napi::Value PtyKill(const Napi::CallbackInfo& info) {
    int id = info[0].As<Napi::Number>().Int32Value();
    const bool useConptyDll = info[1].As<Napi::Boolean>().Value();
-
+ 
 -  const pty_baton* handle = get_pty_baton(id);
 +  // Orca: resolve the DLL BEFORE touching any baton state, for the same reason
 +  // PtyConnect does it before creating anything. LoadConptyDll throws when
@@ -1032,7 +1032,7 @@ index 7b286d3d64..5239ba4e40 100644
 +      (HMODULE)hLibrary,
 +      useConptyDll ? "ConptyClosePseudoConsole" : "ClosePseudoConsole");
 +  }
-
+ 
 -  if (handle != nullptr) {
 -    HANDLE hLibrary = LoadConptyDll(info, useConptyDll);
 -    bool fLoadedDll = hLibrary != nullptr;
@@ -1098,10 +1098,10 @@ index 7b286d3d64..5239ba4e40 100644
 +      CloseHandle(hShellDup);
      }
    }
-
+ 
    return env.Undefined();
  }
-
+ 
 +/**
 + * Orca: confirm a baton really is the pty the caller means.
 + *
@@ -1268,7 +1268,7 @@ index 7b286d3d64..5239ba4e40 100644
 +  exports.Set("setActiveProcessLimit", Napi::Function::New(env, PtySetActiveProcessLimit));
    return exports;
  };
-
+ 
 diff --git a/lib/windowsPtyAgent.js b/lib/windowsPtyAgent.js
 index a358ffb177357e177661033c1b092f9c9d0e5f5a..26c2a4c58799ce649f5113131e4c52f7ed2d87ad 100644
 --- a/lib/windowsPtyAgent.js
