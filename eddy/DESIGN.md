@@ -62,6 +62,40 @@ Rules (carried over from eddy):
 - Everything stays loaded; switching context only swaps what's shown (instant). Orca already behaves this way for workspaces.
 - Whatever is selected drives the **file explorer, source control and the current branch** shown, and every action has a **keybinding** in Orca's keybinding system (`~/.eddy/keybindings.json`, §9.1).
 
+### Design agreement from 2026-10-22: workspace layout stays stable, root is separate
+
+The core agreement from the current session is that the **workspace should remain the stable layout container**: it owns tabs, chat sessions, editor state, terminal layout and the split panes. The part that must become more flexible is the **source root** or **active checkout** behind that layout.
+
+We agree on the following model:
+- **One workspace = one stable layout container.** The layout follows the workspace, not the branch or repo.
+- **One canonical writable root per workspace.** This is the repo/worktree that the workspace treats as its default source-control owner.
+- **Zero or more attached reference roots.** These may be read-only snapshots of `main`, other repos, or investigation branches. They are useful for cross-repo lookup and comparison, not for the default commit/diff flow.
+- **Root switching must preserve the workspace layout.** Changing the active root should not destroy tabs, agent sessions, editor state, or the tab split layout.
+- **Cross-repo investigation is not the same as multi-root writable commit ownership.** If a task needs production edits in another repo, the clean model is to switch the active root or open a different workspace rooted in that repo, not to let one workspace pretend it owns multiple Git write targets at once.
+- **Reference roots must be visible in the file explorer and source-control UI when read-only.** They need to be navigable for understanding, diffing and reasoning, even when they are not the active writable root.
+
+This keeps Orca's strengths (persisted layout, in-place switching, multiple chat sessions) while admitting the real requirement: a workspace must sometimes hold a read-only reference set that spans repos or branches.
+
+### Investigation-first workspace creation
+
+For the investigation-heavy case, the workspace creation form should not force a canonical writable root before the user knows where the bug is. We should split the form into two creation modes:
+
+- **Work on code**: create a workspace with a canonical writable root and a branch/worktree. The current form is fine here.
+- **Investigate first**: create a stable workspace layout with no commit owner yet, then attach read-only roots or snapshots from one or more repos and branches.
+
+Recommended UX:
+- **Workspace name** and **project / folder context** still come first.
+- **Mode**: `Investigate first` or `Start coding`.
+- In `Investigate first` mode, the form asks for:
+  - one or more **reference roots** (repo + branch/ref + optional snapshot)
+  - optional **preferred active root** (which one is visually primary, but not necessarily writable)
+  - whether the investigation should be **single-repo** or **cross-repo**
+  - an **agent preset** or quick-start prompt for the first 1–2 agents
+- The created workspace is still fully usable as a layout container, with tabs, chats, file explorer and git history all available.
+- The user can later press **Convert to coding workspace** to assign a canonical writable root and branch/worktree when the likely fix becomes clear.
+
+This makes the form match the actual workflow: the user often wants a safe, fast read-only investigation shell before committing to editing anything.
+
 ## 5. Mapping onto Orca
 
 ### 5.1 Orca's model (as of v1.4.230)
@@ -91,7 +125,7 @@ This table was written before studying Orca in depth. Treat it as hypotheses for
 ## 6. Agent backends
 
 - Orca is agent-agnostic. Native chat currently covers Claude, Codex, Pi and some ACP agents.
-- **Copilot CLI as a native chat:** Copilot CLI supports `--acp` (Agent Client Protocol over stdio). Adding one ACP launch spec (`agent`, `command: 'copilot'`, `args: ['--acp', …]`, sign-in command) next to the existing ones in `acp-launch-specs.ts` should give Copilot a real chat UI. Small, contained change → good first eddy feature (W3).
+- **Copilot CLI as a native chat (W3, backported 10-20, O18):** Copilot CLI serves ACP with `copilot --acp --stdio`. Upstream PR [stablyai/orca#30899](https://github.com/stablyai/orca/pull/30899) adds one `COPILOT_LAUNCH_SPEC` to `acp-launch-specs.ts` (plus sign-in, permission-mode and visuals rows), which gives Copilot an agent-session tab with the message rail, markdown and inline visuals, model/effort picker, permission cards, Stop, `/compact` and reattach. eddy-omega carries it as a verbatim backport until an Orca release ships it. Limits: needs a **stable** Copilot CLI ≥ 1.0.98 (pre-releases such as `1.0.101-0` keep the terminal); no transcript import (terminal Copilot conversations can't be resumed in chat); models appear after the first session. **Ask is authoritative (O19):** an Ask chat withholds `/allow-all`, `/autopilot` and `/permissions` (arguments or not), starts only once Copilot confirms autopilot and `allow_all` are off, and turns either back off when Copilot reports it on (ending the chat if Copilot refuses); Copilot can still approve a request in the moment before that write lands. Code: `src/main/eddy/acp-ask-guard.ts`. Rebase notes: §7.1.
 - The employer-internal agent hub and its internal MCP servers are **out of scope** for eddy-omega.
 - **MCP:** each agent reads its own MCP config. Plan (from eddy): an eddy MCP catalog; each Working Context enables a subset; passed to each agent in its own format. Q8.
 
@@ -104,6 +138,77 @@ Details and commands: [`eddy/AGENTS.md`](./AGENTS.md).
 - Orca releases every 1–3 days (tags on short release branches). Sync every week or two onto the latest stable tag; never onto `-rc` tags.
 - Upstream edits stay small and marked `// eddy:`; new code goes in `src/{main,renderer/src,shared}/eddy/`.
 - All upstream GitHub workflows (~90) are disabled on eddy-omega; only `eddy-*.yml` run. Upstream's Dependabot config is removed (dependency updates come with upstream syncs).
+
+### 7.1 Carried changes: rebase notes
+
+Read this before every upstream sync. Each entry says what eddy-omega carries, how to tell whether upstream has caught up, and how to resolve the conflicts it causes.
+
+#### Copilot chat (W3: O18, O19)
+
+**What is carried** (on `main` since 0.1.4/0.1.5):
+
+| Commit | Kind | What it is |
+|---|---|---|
+| `6c73c44dfb` feat(chat): backport GitHub Copilot ACP chat | **Upstream, verbatim** | stablyai/orca#30899 by Morten Trydal (its commits `8841c3c434`, `7f576bc576`, `c5408b6e79`), cherry-picked onto `upstream/v1.4.230`. Production code is 6 files: `src/main/acp/acp-launch-specs.ts` (`COPILOT_LAUNCH_SPEC`, `COPILOT_SESSION_HISTORY`), `src/main/acp/acp-visuals-skill.ts` (`loadCopilotVisualsSkill`), `src/shared/agent-chat-permission-mode.ts`, `src/shared/agent-session-sign-in.ts`, `src/shared/app-version.ts` (accepts `1.0.98.`), `docs/site/content/docs/agents/native-chat.mdx`. The rest is tests and `src/main/acp/fixtures/copilot-v1-*.jsonl` recordings. |
+| `6c73c44dfb` (same commit) | eddy adaptation of tests | Our base predates upstream's `opencode2` agent and OMP's catalog probe, so the agent lists in `acp-structured-compaction.test.ts`, `structured-agent-launch-parity.test.ts`, `structured-agent-model-catalog-discovery.test.ts` and `structured-agent-runtime-registrations-acp.test.ts` drop `opencode2` and keep OMP excluded. The launch-parity snapshot was rebuilt by hand (see "Snapshot" below). |
+| `94335ec384` test(chat): adapt Copilot tests to v1.4.230 test helpers | eddy adaptation of tests | `acp-structured-copilot-recordings.test.ts` reads the start link from `acquire()` and the refusal from its rejection (our rig has no `rig.started()`/`rig.openFailure()`); `structured-agent-launch-support-probe-copilot.test.ts` passes the selector `'id:w'` (our `structuredAgentSupportsLaunch` takes a selector, not a function). |
+| `dd715ba06b` Docs: W3 Copilot chat backported | eddy docs | §6, §11 W3, O18. |
+| `0cc3c28005` feat(chat): keep Ask authoritative over Copilot's own approval switches | **eddy feature** | The Ask guard (O19): `src/main/eddy/acp-ask-guard.ts` and its test, plus the `eddy:` hooks listed below. Closes the PR's known limit ("Copilot's own `allow_all` / autopilot can approve while the chat says Ask"). |
+
+**Ask guard hooks in upstream files** (`git grep -n "eddy:" -- src/main/acp`):
+
+- `acp-structured-session-adapter.ts`: `await guardAcpAsk(session, input.permissionMode, this.deps.logger)` right after `acquireAcpStructuredSession` returns and before `this.sessions.set(...)`, plus its import. It lives here because `acp-structured-acquire.ts` is at the 300-line `max-lines` limit.
+- `acp-structured-options.ts`: `readConfigOptions()` accessor on `AcpStructuredOptions`.
+- `acp-prompt-content.ts`: `isWithheldCommand` delegates to `sendsWithheldAcpCommand` (matches a command's name in any text block, arguments and case aside; this also tightens Antigravity's `/logout`), plus its import.
+- `acp-launch-specs.ts`: Copilot's `dialect: COPILOT_ACP_DIALECT` (the generic dialect plus `withheldCommands: ['allow-all', 'autopilot', 'permissions']`), plus its import; the file imports only `type AcpDialect` from `acp-dialect` again.
+- `acp-structured-copilot-recordings.test.ts`: the two command-list assertions expect 24 commands, not 27.
+
+**Is it upstream yet?** Check the target tag before rebasing:
+
+```powershell
+gh pr view 30899 --repo stablyai/orca --json state,mergeCommit,headRefOid
+git grep -n "COPILOT_LAUNCH_SPEC" upstream/<new-tag> -- src/main/acp/acp-launch-specs.ts
+```
+
+As of 10-22 the PR is open at head `c5408b6e79` and no `upstream/v*` tag has it.
+
+**Case A: the new tag ships Copilot chat.**
+
+1. Rebase interactively and **drop** `6c73c44dfb` and `94335ec384`; keep `dd715ba06b` and `0cc3c28005`. Don't resolve the backport's conflicts by hand: upstream's version wins.
+2. Re-apply the Ask guard onto upstream's code:
+   - If upstream gave Copilot its own dialect, make `COPILOT_ACP_DIALECT` spread that dialect instead of `GENERIC_ACP_DIALECT`, or move `withheldCommands` into a hook on upstream's dialect.
+   - Re-apply the 24-command expectations in upstream's `acp-structured-copilot-recordings.test.ts`.
+3. Check whether upstream fixed the known limit itself: search the lane for `allow_all`, `autopilot`, a multi-option `permissionModeConfig` or a Copilot `withheldCommands`. If it did, remove the eddy guard and its hooks, and mark O19 reversed in the decision log. If it fixed it only partly, keep the parts it lacks.
+4. Update §6 and O18 to say which Orca release shipped it.
+
+**Case B: the new tag doesn't ship it** (the backport is replayed):
+
+- **Agent lists in tests:** upstream may have added agents. Keep upstream's list and append `copilot` last, as the PR did; drop entries for agents our new base doesn't have.
+- **Launch-parity snapshot** (`src/main/runtime/__snapshots__/structured-agent-launch-parity.test.ts.snap`): regenerate it with `pnpm test src/main/runtime/structured-agent-launch-parity.test.ts -u` and check that the diff holds only Copilot rows plus the configured rows' id shifts. Without a working install, rebuild it by hand as `6c73c44dfb` did:
+  - case *i* gets session id `00000000-0000-4000-8000-<i+1, 12 digits>`;
+  - non-configured cases come first (5 per agent, in `AGENTS` order), then configured cases (2 per agent);
+  - the chat scratch folder is the first 32 hex characters of `sha256(session id)`;
+  - nothing else in a row depends on the index.
+- **Test-helper drift:** the ported tests target upstream's newer helpers. Once the new base has `AcpAdapterRig.started()`/`openFailure()` and the function form of `structuredAgentSupportsLaunch`, drop `94335ec384`'s edits and take the PR's test versions. CI's type-check finds any other drift.
+- **Production files:** these applied cleanly to v1.4.230. If upstream amended the PR (its `headRefOid` is no longer `c5408b6e79`), re-cherry-pick the new commits instead of carrying the old ones.
+- **Ask guard:** if upstream changed `acp-structured-session-adapter.ts`, `AcpStructuredOptions`, `withheldCommands`, the session-update types (`config_option_update`, `current_mode_update`) or `setConfigOption`, adjust the hooks.
+  - The guard depends on Copilot's protocol facts: config ids `mode` and `allow_all`; values `on`/`off`; mode ids `…/session-modes#agent` and `…#autopilot`.
+  - If Copilot renames them, the guard silently does nothing. Its test reads `copilot-v1-handshake.jsonl`, so check new recordings when upstream re-records them.
+
+**Verify after the sync:**
+
+- `git grep -n "eddy:" -- src/main/acp` shows the hooks above (none, in case A step 3, if the guard was removed).
+- `eddy-checks` runs `src/main/eddy/acp-ask-guard.test.ts` and the tests next to hooked files (adapter, options, prompt content). It does **not** run the ported Copilot tests; run them locally:
+
+  ```powershell
+  pnpm test src/main/acp/acp-structured-copilot-recordings.test.ts src/main/acp/acp-structured-launch-resolution-copilot.test.ts src/main/runtime/structured-agent-launch-parity.test.ts src/main/runtime/structured-agent-launch-support-probe-copilot.test.ts src/main/runtime/structured-agent-runtime-registrations-acp.test.ts src/main/runtime/structured-agent-model-catalog-discovery.test.ts src/main/acp/acp-structured-compaction.test.ts
+  ```
+
+  On the work machine `pnpm install` fails, because the Microsoft npm feed proxy lacks a locked package, so run them where public npm is reachable.
+- By hand, with a **stable** Copilot CLI ≥ 1.0.98 and Chat UI on:
+  - a new Copilot agent opens as a chat tab;
+  - `/allow-all on` is refused in Ask;
+  - Full access still works.
 
 ## 8. Versions, releases, updates
 
@@ -168,17 +273,24 @@ Built as `APP_HOME_DIR_NAME` / `REPO_DATA_DIR_NAME` in `src/shared/eddy/eddy-bui
 
 ## 11. What's next (trial plan)
 
+Priority order, agreed 2026-10-22:
+1. **Root-switching without layout loss** — preserving the workspace layout and chat/agent state while switching the active repo/worktree or branch.
+2. **Attached read-only roots / snapshots** — read-only reference branches from the same or other repos, including branch- or snapshot-backed investigation views.
+3. **Right-panel reading flow** — make the file explorer, git history, diff and blame views usable on attached reference roots so investigation is a real part of the workspace, not a second-class mode.
+
 1. ~~**T0 — Fork setup**~~ — done 10-19: clone, `upstream` remote, `main` on `upstream/v1.4.230`, docs, version file, workflow-disable script; pushed to `Tom-from-6520/eddy-omega` (public).
 2. ~~**CI/CD**~~ — 10-19: `eddy-checks.yml`, `eddy-build.yml`, eddy omega identity and updater (§8). Actions enabled with every upstream workflow disabled. See §11a for verification status.
 3. ~~**T1 — Updater by hand**~~ — 10-20: installed 0.1.0 (Windows user setup), it updated itself to 0.1.1 (installed `eddyVersion` 0.1.1, installer fetched from eddy-omega's release). Building from source on the personal machine is still to do.
 4. ~~**W-S1 — Orca services**~~ (§9) — 10-20: feedback/crash blocked, star prompt off, eddy-hosted update nudges, "(orca feat)" disabled buttons; About/Settings show `eddyVersion`.
 5. **T2 — Orca study** (§1.1): use eddy omega for real work for a few days and read the code behind what you use, then write **§5.1 "Orca's model"** in Orca's own terms: projects/repos/workspaces, the sidebar, tabs/splits and layout (answers Q-L1), native chat sessions (how many per workspace, history), file explorer and source control (what drives them), keybindings and the command palette, settings/profiles. End with a gap list: each need in §3–4 → "Orca already does it", "small change to an Orca concept", or "new concept".
 6. **W-S2 — folders** (§9.1): ~~`~/.eddy` (W-S2a)~~ and ~~`.eddy/` (W-S2b)~~ built 10-20; test agent hooks by hand (Windows, WSL, SSH). `eddy.yaml` (W-S2c) together with W-B1.
-7. **T3 — First change in Orca's terms:** the smallest gap from T2 that makes Orca feel like §3–4 (replacing the old "Working Context spike"). It must work with Orca's file explorer, source control, layout and keybindings. **Measure the upstream files touched and hook lines added.**
-8. **W3 — Copilot CLI as an ACP native chat** (§6).
-9. **Upstream sync** onto the newest stable Orca tag (after W-S1 and again after T3) to measure rebase cost.
-10. **T4 — Decide:** continue eddy-omega or return to eddy. Pass if T3 needs only small hooks in upstream files, the chat is good enough, and the syncs go through without major conflicts.
-11. If continuing: UI rebranding hook (W-B1, §8), exe/CLI names (Q-I1), signing, show `eddyVersion` in Settings/About, MCP/skills panels (Q-UI1).
+7. **T3 — Root model change, preserving workspace layout:** build the minimal model that keeps a workspace's layout and chat sessions stable while introducing one canonical writable root plus attached read-only reference roots. This is the first concrete product behavior from the 2026-10-22 session. It should support: switching the active root; preserving tabs and agent sessions; read-only branches/snapshots from same or other repos; and explicit cross-repo investigation flows without breaking the current workspace layout model.
+8. **T3b — Right-panel reference browsing:** make the file explorer and git history panels read a selected attached root or branch snapshot, including the same-repo and cross-repo investigation cases. The goal is that an investigation branch or reference snapshot can be read and understood without being the workspace's write target.
+9. **T4 — First change in Orca's terms:** the smallest gap from T2 that makes Orca feel like §3–4 (replacing the old "Working Context spike"). It must work with Orca's file explorer, source control, layout and keybindings. **Measure the upstream files touched and hook lines added.**
+10. **W3 — Copilot CLI as an ACP native chat** (§6) — 10-20: backported stablyai/orca#30899 (O18); try it by hand on Windows from the next alpha. Not run locally: the Microsoft npm feed proxy lacks a locked package (`@vitest/mocker@5.0.5`), so `pnpm install --frozen-lockfile` fails on the work machine.
+11. **Upstream sync** onto the newest stable Orca tag (after W-S1 and again after T3/T3b) to measure rebase cost.
+12. **T5 — Decide:** continue eddy-omega or return to eddy. Pass if the root model needs only small hooks in upstream files, the chat is good enough, and the syncs go through without major conflicts.
+13. If continuing: UI rebranding hook (W-B1, §8), exe/CLI names (Q-I1), signing, show `eddyVersion` in Settings/About, MCP/skills panels (Q-UI1).
 
 ### 11a. Verification status (CI/CD)
 - 10-20: `eddy-checks` green (type-check of ~16.6k files, lint/format of changed files, 36 test files + eddy build-script tests). `eddy-build` green on Windows x64 and Linux x64; the build verifies the packaged app is `eddy-omega` with `eddyVersion` and Orca's internal version.
@@ -230,3 +342,8 @@ eddy-omega decisions:
 | O15 | 10-20 | Home folder `~/.orca` → `~/.eddy` (shared folder with the VS Code eddy; no name clashes). Per-repo `.orca/` → `.eddy/`, `orca.yaml` → `eddy.yaml` (proposed: fall back to `orca.yaml`). |
 | O16 | 10-20 | MCP / skills panels: decide later (Q-UI1). |
 | O17 | 10-20 | Help → About and Settings show eddy's version: `0.1.x alpha (Orca 1.4.230)`, like eddy's `0.1.5 alpha (Code - OSS 1.141.0)`. |
+| O18 | 10-20 | Copilot chat (W3) = backport of upstream PR stablyai/orca#30899, kept verbatim (no `eddy:` markers) so it drops out at the rebase onto an Orca release that ships it, instead of a parallel eddy implementation. |
+| O19 | 10-22 | Ask is authoritative for Copilot chats, closing upstream's known limit: withhold the access-raising commands, confirm autopilot and `allow_all` off at start, revert them when Copilot reports one on (end the chat if it refuses). eddy code (`src/main/eddy/acp-ask-guard.ts`) with `eddy:` hooks in the ACP adapter, options, prompt check and Copilot's launch row. The shared withheld-command check now matches the command's name in any text block, which also tightens Antigravity's `/logout`. |
+| O20 | 10-22 | Keep the **workspace** as the stable layout/session container, but separate it from the **active source root**. One workspace may have one canonical writable root, plus attached read-only reference roots from the same repo or other repos. |
+| O21 | 10-22 | Root switching must preserve the workspace layout and agent/chat state. Cross-repo investigation should be modeled as a reference root or an active-root switch, not as a workspace that tries to own multiple writable Git roots at once. |
+| O22 | 10-22 | Right-panel browsing must work on attached reference roots: file explorer, git history, blame and diff views are read operations for investigation work and should not require the reference root to become the workspace's primary writable target. |

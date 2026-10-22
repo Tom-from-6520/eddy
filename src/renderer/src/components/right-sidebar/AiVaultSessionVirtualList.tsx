@@ -38,6 +38,7 @@ export function AiVaultSessionVirtualList({
   groups,
   collapsedGroups,
   loading,
+  scopePending = false,
   scanProgressShown = false,
   sessionsCount,
   filteredSessionsCount,
@@ -75,6 +76,7 @@ export function AiVaultSessionVirtualList({
   groups: readonly AiVaultSessionListGroup[]
   collapsedGroups: ReadonlySet<string>
   loading: boolean
+  scopePending?: boolean
   /** The progress strip above names the scan, so the list does not repeat it. */
   scanProgressShown?: boolean
   sessionsCount: number
@@ -246,7 +248,8 @@ export function AiVaultSessionVirtualList({
         ref={listScrollRef}
         className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden scrollbar-sleek"
       >
-        {loading && sessionsCount === 0 ? (
+        {(loading && sessionsCount === 0) ||
+        (scopePending && filteredSessionsCount === 0 && !noAgentsSelected) ? (
           <SessionLoadingState showLabel={!scanProgressShown} />
         ) : null}
 
@@ -259,7 +262,7 @@ export function AiVaultSessionVirtualList({
           />
         ) : null}
 
-        {sessionsCount > 0 && filteredSessionsCount === 0 ? (
+        {sessionsCount > 0 && filteredSessionsCount === 0 && (!scopePending || noAgentsSelected) ? (
           <EmptyState
             title={
               noAgentsSelected
