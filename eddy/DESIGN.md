@@ -91,7 +91,7 @@ This table was written before studying Orca in depth. Treat it as hypotheses for
 ## 6. Agent backends
 
 - Orca is agent-agnostic. Native chat currently covers Claude, Codex, Pi and some ACP agents.
-- **Copilot CLI as a native chat (W3, backported 10-20, O18):** Copilot CLI serves ACP with `copilot --acp --stdio`. Upstream PR [stablyai/orca#30899](https://github.com/stablyai/orca/pull/30899) adds one `COPILOT_LAUNCH_SPEC` to `acp-launch-specs.ts` (plus sign-in, permission-mode and visuals rows), which gives Copilot an agent-session tab with the message rail, markdown and inline visuals, model/effort picker, permission cards, Stop, `/compact` and reattach. eddy-omega carries it as a verbatim backport until an Orca release ships it. Limits: needs a **stable** Copilot CLI ≥ 1.0.98 (pre-releases such as `1.0.101-0` keep the terminal); no transcript import (terminal Copilot conversations can't be resumed in chat); models appear after the first session. **Ask is authoritative (O19):** an Ask chat withholds `/allow-all`, `/autopilot` and `/permissions` (arguments or not), starts only once Copilot confirms autopilot and `allow_all` are off, and turns either back off when Copilot reports it on (ending the chat if Copilot refuses); Copilot can still approve a request in the moment before that write lands. Code: `src/main/eddy/acp-ask-guard.ts`.
+- **Copilot CLI as a native chat (W3, backported 10-20, O18):** Copilot CLI serves ACP with `copilot --acp --stdio`. Upstream PR [stablyai/orca#30899](https://github.com/stablyai/orca/pull/30899) adds one `COPILOT_LAUNCH_SPEC` to `acp-launch-specs.ts` (plus sign-in, permission-mode and visuals rows), which gives Copilot an agent-session tab with the message rail, markdown and inline visuals, model/effort picker, permission cards, Stop, `/compact` and reattach. eddy-omega carries it as a verbatim backport until an Orca release ships it. Limits: needs a **stable** Copilot CLI ≥ 1.0.98 (pre-releases such as `1.0.101-0` keep the terminal); no transcript import (terminal Copilot conversations can't be resumed in chat); models appear after the first session. **Ask is authoritative (O19):** an Ask chat withholds `/allow-all`, `/autopilot` and `/permissions` (arguments or not), starts only once Copilot confirms autopilot and `allow_all` are off, and turns either back off when Copilot reports it on (ending the chat if Copilot refuses); Copilot can still approve a request in the moment before that write lands. Code: `src/main/eddy/acp-ask-guard.ts`. Rebase notes: §7.1.
 - The employer-internal agent hub and its internal MCP servers are **out of scope** for eddy-omega.
 - **MCP:** each agent reads its own MCP config. Plan (from eddy): an eddy MCP catalog; each Working Context enables a subset; passed to each agent in its own format. Q8.
 
@@ -104,6 +104,77 @@ Details and commands: [`eddy/AGENTS.md`](./AGENTS.md).
 - Orca releases every 1–3 days (tags on short release branches). Sync every week or two onto the latest stable tag; never onto `-rc` tags.
 - Upstream edits stay small and marked `// eddy:`; new code goes in `src/{main,renderer/src,shared}/eddy/`.
 - All upstream GitHub workflows (~90) are disabled on eddy-omega; only `eddy-*.yml` run. Upstream's Dependabot config is removed (dependency updates come with upstream syncs).
+
+### 7.1 Carried changes: rebase notes
+
+Read this before every upstream sync. Each entry says what eddy-omega carries, how to tell whether upstream has caught up, and how to resolve the conflicts it causes.
+
+#### Copilot chat (W3: O18, O19)
+
+**What is carried** (on `main` since 0.1.4/0.1.5):
+
+| Commit | Kind | What it is |
+|---|---|---|
+| `6c73c44dfb` feat(chat): backport GitHub Copilot ACP chat | **Upstream, verbatim** | stablyai/orca#30899 by Morten Trydal (its commits `8841c3c434`, `7f576bc576`, `c5408b6e79`), cherry-picked onto `upstream/v1.4.230`. Production code is 6 files: `src/main/acp/acp-launch-specs.ts` (`COPILOT_LAUNCH_SPEC`, `COPILOT_SESSION_HISTORY`), `src/main/acp/acp-visuals-skill.ts` (`loadCopilotVisualsSkill`), `src/shared/agent-chat-permission-mode.ts`, `src/shared/agent-session-sign-in.ts`, `src/shared/app-version.ts` (accepts `1.0.98.`), `docs/site/content/docs/agents/native-chat.mdx`. The rest is tests and `src/main/acp/fixtures/copilot-v1-*.jsonl` recordings. |
+| `6c73c44dfb` (same commit) | eddy adaptation of tests | Our base predates upstream's `opencode2` agent and OMP's catalog probe, so the agent lists in `acp-structured-compaction.test.ts`, `structured-agent-launch-parity.test.ts`, `structured-agent-model-catalog-discovery.test.ts` and `structured-agent-runtime-registrations-acp.test.ts` drop `opencode2` and keep OMP excluded. The launch-parity snapshot was rebuilt by hand (see "Snapshot" below). |
+| `94335ec384` test(chat): adapt Copilot tests to v1.4.230 test helpers | eddy adaptation of tests | `acp-structured-copilot-recordings.test.ts` reads the start link from `acquire()` and the refusal from its rejection (our rig has no `rig.started()`/`rig.openFailure()`); `structured-agent-launch-support-probe-copilot.test.ts` passes the selector `'id:w'` (our `structuredAgentSupportsLaunch` takes a selector, not a function). |
+| `dd715ba06b` Docs: W3 Copilot chat backported | eddy docs | §6, §11 W3, O18. |
+| `0cc3c28005` feat(chat): keep Ask authoritative over Copilot's own approval switches | **eddy feature** | The Ask guard (O19): `src/main/eddy/acp-ask-guard.ts` and its test, plus the `eddy:` hooks listed below. Closes the PR's known limit ("Copilot's own `allow_all` / autopilot can approve while the chat says Ask"). |
+
+**Ask guard hooks in upstream files** (`git grep -n "eddy:" -- src/main/acp`):
+
+- `acp-structured-session-adapter.ts`: `await guardAcpAsk(session, input.permissionMode, this.deps.logger)` right after `acquireAcpStructuredSession` returns and before `this.sessions.set(...)`, plus its import. It lives here because `acp-structured-acquire.ts` is at the 300-line `max-lines` limit.
+- `acp-structured-options.ts`: `readConfigOptions()` accessor on `AcpStructuredOptions`.
+- `acp-prompt-content.ts`: `isWithheldCommand` delegates to `sendsWithheldAcpCommand` (matches a command's name in any text block, arguments and case aside; this also tightens Antigravity's `/logout`), plus its import.
+- `acp-launch-specs.ts`: Copilot's `dialect: COPILOT_ACP_DIALECT` (the generic dialect plus `withheldCommands: ['allow-all', 'autopilot', 'permissions']`), plus its import; the file imports only `type AcpDialect` from `acp-dialect` again.
+- `acp-structured-copilot-recordings.test.ts`: the two command-list assertions expect 24 commands, not 27.
+
+**Is it upstream yet?** Check the target tag before rebasing:
+
+```powershell
+gh pr view 30899 --repo stablyai/orca --json state,mergeCommit,headRefOid
+git grep -n "COPILOT_LAUNCH_SPEC" upstream/<new-tag> -- src/main/acp/acp-launch-specs.ts
+```
+
+As of 10-22 the PR is open at head `c5408b6e79` and no `upstream/v*` tag has it.
+
+**Case A: the new tag ships Copilot chat.**
+
+1. Rebase interactively and **drop** `6c73c44dfb` and `94335ec384`; keep `dd715ba06b` and `0cc3c28005`. Don't resolve the backport's conflicts by hand: upstream's version wins.
+2. Re-apply the Ask guard onto upstream's code:
+   - If upstream gave Copilot its own dialect, make `COPILOT_ACP_DIALECT` spread that dialect instead of `GENERIC_ACP_DIALECT`, or move `withheldCommands` into a hook on upstream's dialect.
+   - Re-apply the 24-command expectations in upstream's `acp-structured-copilot-recordings.test.ts`.
+3. Check whether upstream fixed the known limit itself: search the lane for `allow_all`, `autopilot`, a multi-option `permissionModeConfig` or a Copilot `withheldCommands`. If it did, remove the eddy guard and its hooks, and mark O19 reversed in the decision log. If it fixed it only partly, keep the parts it lacks.
+4. Update §6 and O18 to say which Orca release shipped it.
+
+**Case B: the new tag doesn't ship it** (the backport is replayed):
+
+- **Agent lists in tests:** upstream may have added agents. Keep upstream's list and append `copilot` last, as the PR did; drop entries for agents our new base doesn't have.
+- **Launch-parity snapshot** (`src/main/runtime/__snapshots__/structured-agent-launch-parity.test.ts.snap`): regenerate it with `pnpm test src/main/runtime/structured-agent-launch-parity.test.ts -u` and check that the diff holds only Copilot rows plus the configured rows' id shifts. Without a working install, rebuild it by hand as `6c73c44dfb` did:
+  - case *i* gets session id `00000000-0000-4000-8000-<i+1, 12 digits>`;
+  - non-configured cases come first (5 per agent, in `AGENTS` order), then configured cases (2 per agent);
+  - the chat scratch folder is the first 32 hex characters of `sha256(session id)`;
+  - nothing else in a row depends on the index.
+- **Test-helper drift:** the ported tests target upstream's newer helpers. Once the new base has `AcpAdapterRig.started()`/`openFailure()` and the function form of `structuredAgentSupportsLaunch`, drop `94335ec384`'s edits and take the PR's test versions. CI's type-check finds any other drift.
+- **Production files:** these applied cleanly to v1.4.230. If upstream amended the PR (its `headRefOid` is no longer `c5408b6e79`), re-cherry-pick the new commits instead of carrying the old ones.
+- **Ask guard:** if upstream changed `acp-structured-session-adapter.ts`, `AcpStructuredOptions`, `withheldCommands`, the session-update types (`config_option_update`, `current_mode_update`) or `setConfigOption`, adjust the hooks.
+  - The guard depends on Copilot's protocol facts: config ids `mode` and `allow_all`; values `on`/`off`; mode ids `…/session-modes#agent` and `…#autopilot`.
+  - If Copilot renames them, the guard silently does nothing. Its test reads `copilot-v1-handshake.jsonl`, so check new recordings when upstream re-records them.
+
+**Verify after the sync:**
+
+- `git grep -n "eddy:" -- src/main/acp` shows the hooks above (none, in case A step 3, if the guard was removed).
+- `eddy-checks` runs `src/main/eddy/acp-ask-guard.test.ts` and the tests next to hooked files (adapter, options, prompt content). It does **not** run the ported Copilot tests; run them locally:
+
+  ```powershell
+  pnpm test src/main/acp/acp-structured-copilot-recordings.test.ts src/main/acp/acp-structured-launch-resolution-copilot.test.ts src/main/runtime/structured-agent-launch-parity.test.ts src/main/runtime/structured-agent-launch-support-probe-copilot.test.ts src/main/runtime/structured-agent-runtime-registrations-acp.test.ts src/main/runtime/structured-agent-model-catalog-discovery.test.ts src/main/acp/acp-structured-compaction.test.ts
+  ```
+
+  On the work machine `pnpm install` fails, because the Microsoft npm feed proxy lacks a locked package, so run them where public npm is reachable.
+- By hand, with a **stable** Copilot CLI ≥ 1.0.98 and Chat UI on:
+  - a new Copilot agent opens as a chat tab;
+  - `/allow-all on` is refused in Ask;
+  - Full access still works.
 
 ## 8. Versions, releases, updates
 
