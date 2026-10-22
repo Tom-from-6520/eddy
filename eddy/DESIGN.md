@@ -62,6 +62,40 @@ Rules (carried over from eddy):
 - Everything stays loaded; switching context only swaps what's shown (instant). Orca already behaves this way for workspaces.
 - Whatever is selected drives the **file explorer, source control and the current branch** shown, and every action has a **keybinding** in Orca's keybinding system (`~/.eddy/keybindings.json`, §9.1).
 
+### Design agreement from 2026-10-22: workspace layout stays stable, root is separate
+
+The core agreement from the current session is that the **workspace should remain the stable layout container**: it owns tabs, chat sessions, editor state, terminal layout and the split panes. The part that must become more flexible is the **source root** or **active checkout** behind that layout.
+
+We agree on the following model:
+- **One workspace = one stable layout container.** The layout follows the workspace, not the branch or repo.
+- **One canonical writable root per workspace.** This is the repo/worktree that the workspace treats as its default source-control owner.
+- **Zero or more attached reference roots.** These may be read-only snapshots of `main`, other repos, or investigation branches. They are useful for cross-repo lookup and comparison, not for the default commit/diff flow.
+- **Root switching must preserve the workspace layout.** Changing the active root should not destroy tabs, agent sessions, editor state, or the tab split layout.
+- **Cross-repo investigation is not the same as multi-root writable commit ownership.** If a task needs production edits in another repo, the clean model is to switch the active root or open a different workspace rooted in that repo, not to let one workspace pretend it owns multiple Git write targets at once.
+- **Reference roots must be visible in the file explorer and source-control UI when read-only.** They need to be navigable for understanding, diffing and reasoning, even when they are not the active writable root.
+
+This keeps Orca's strengths (persisted layout, in-place switching, multiple chat sessions) while admitting the real requirement: a workspace must sometimes hold a read-only reference set that spans repos or branches.
+
+### Investigation-first workspace creation
+
+For the investigation-heavy case, the workspace creation form should not force a canonical writable root before the user knows where the bug is. We should split the form into two creation modes:
+
+- **Work on code**: create a workspace with a canonical writable root and a branch/worktree. The current form is fine here.
+- **Investigate first**: create a stable workspace layout with no commit owner yet, then attach read-only roots or snapshots from one or more repos and branches.
+
+Recommended UX:
+- **Workspace name** and **project / folder context** still come first.
+- **Mode**: `Investigate first` or `Start coding`.
+- In `Investigate first` mode, the form asks for:
+  - one or more **reference roots** (repo + branch/ref + optional snapshot)
+  - optional **preferred active root** (which one is visually primary, but not necessarily writable)
+  - whether the investigation should be **single-repo** or **cross-repo**
+  - an **agent preset** or quick-start prompt for the first 1–2 agents
+- The created workspace is still fully usable as a layout container, with tabs, chats, file explorer and git history all available.
+- The user can later press **Convert to coding workspace** to assign a canonical writable root and branch/worktree when the likely fix becomes clear.
+
+This makes the form match the actual workflow: the user often wants a safe, fast read-only investigation shell before committing to editing anything.
+
 ## 5. Mapping onto Orca
 
 ### 5.1 Orca's model (as of v1.4.230)
@@ -239,17 +273,24 @@ Built as `APP_HOME_DIR_NAME` / `REPO_DATA_DIR_NAME` in `src/shared/eddy/eddy-bui
 
 ## 11. What's next (trial plan)
 
+Priority order, agreed 2026-10-22:
+1. **Root-switching without layout loss** — preserving the workspace layout and chat/agent state while switching the active repo/worktree or branch.
+2. **Attached read-only roots / snapshots** — read-only reference branches from the same or other repos, including branch- or snapshot-backed investigation views.
+3. **Right-panel reading flow** — make the file explorer, git history, diff and blame views usable on attached reference roots so investigation is a real part of the workspace, not a second-class mode.
+
 1. ~~**T0 — Fork setup**~~ — done 10-19: clone, `upstream` remote, `main` on `upstream/v1.4.230`, docs, version file, workflow-disable script; pushed to `Tom-from-6520/eddy-omega` (public).
 2. ~~**CI/CD**~~ — 10-19: `eddy-checks.yml`, `eddy-build.yml`, eddy omega identity and updater (§8). Actions enabled with every upstream workflow disabled. See §11a for verification status.
 3. ~~**T1 — Updater by hand**~~ — 10-20: installed 0.1.0 (Windows user setup), it updated itself to 0.1.1 (installed `eddyVersion` 0.1.1, installer fetched from eddy-omega's release). Building from source on the personal machine is still to do.
 4. ~~**W-S1 — Orca services**~~ (§9) — 10-20: feedback/crash blocked, star prompt off, eddy-hosted update nudges, "(orca feat)" disabled buttons; About/Settings show `eddyVersion`.
 5. **T2 — Orca study** (§1.1): use eddy omega for real work for a few days and read the code behind what you use, then write **§5.1 "Orca's model"** in Orca's own terms: projects/repos/workspaces, the sidebar, tabs/splits and layout (answers Q-L1), native chat sessions (how many per workspace, history), file explorer and source control (what drives them), keybindings and the command palette, settings/profiles. End with a gap list: each need in §3–4 → "Orca already does it", "small change to an Orca concept", or "new concept".
 6. **W-S2 — folders** (§9.1): ~~`~/.eddy` (W-S2a)~~ and ~~`.eddy/` (W-S2b)~~ built 10-20; test agent hooks by hand (Windows, WSL, SSH). `eddy.yaml` (W-S2c) together with W-B1.
-7. **T3 — First change in Orca's terms:** the smallest gap from T2 that makes Orca feel like §3–4 (replacing the old "Working Context spike"). It must work with Orca's file explorer, source control, layout and keybindings. **Measure the upstream files touched and hook lines added.**
-8. **W3 — Copilot CLI as an ACP native chat** (§6) — 10-20: backported stablyai/orca#30899 (O18); try it by hand on Windows from the next alpha. Not run locally: the Microsoft npm feed proxy lacks a locked package (`@vitest/mocker@5.0.5`), so `pnpm install --frozen-lockfile` fails on the work machine.
-9. **Upstream sync** onto the newest stable Orca tag (after W-S1 and again after T3) to measure rebase cost.
-10. **T4 — Decide:** continue eddy-omega or return to eddy. Pass if T3 needs only small hooks in upstream files, the chat is good enough, and the syncs go through without major conflicts.
-11. If continuing: UI rebranding hook (W-B1, §8), exe/CLI names (Q-I1), signing, show `eddyVersion` in Settings/About, MCP/skills panels (Q-UI1).
+7. **T3 — Root model change, preserving workspace layout:** build the minimal model that keeps a workspace's layout and chat sessions stable while introducing one canonical writable root plus attached read-only reference roots. This is the first concrete product behavior from the 2026-10-22 session. It should support: switching the active root; preserving tabs and agent sessions; read-only branches/snapshots from same or other repos; and explicit cross-repo investigation flows without breaking the current workspace layout model.
+8. **T3b — Right-panel reference browsing:** make the file explorer and git history panels read a selected attached root or branch snapshot, including the same-repo and cross-repo investigation cases. The goal is that an investigation branch or reference snapshot can be read and understood without being the workspace's write target.
+9. **T4 — First change in Orca's terms:** the smallest gap from T2 that makes Orca feel like §3–4 (replacing the old "Working Context spike"). It must work with Orca's file explorer, source control, layout and keybindings. **Measure the upstream files touched and hook lines added.**
+10. **W3 — Copilot CLI as an ACP native chat** (§6) — 10-20: backported stablyai/orca#30899 (O18); try it by hand on Windows from the next alpha. Not run locally: the Microsoft npm feed proxy lacks a locked package (`@vitest/mocker@5.0.5`), so `pnpm install --frozen-lockfile` fails on the work machine.
+11. **Upstream sync** onto the newest stable Orca tag (after W-S1 and again after T3/T3b) to measure rebase cost.
+12. **T5 — Decide:** continue eddy-omega or return to eddy. Pass if the root model needs only small hooks in upstream files, the chat is good enough, and the syncs go through without major conflicts.
+13. If continuing: UI rebranding hook (W-B1, §8), exe/CLI names (Q-I1), signing, show `eddyVersion` in Settings/About, MCP/skills panels (Q-UI1).
 
 ### 11a. Verification status (CI/CD)
 - 10-20: `eddy-checks` green (type-check of ~16.6k files, lint/format of changed files, 36 test files + eddy build-script tests). `eddy-build` green on Windows x64 and Linux x64; the build verifies the packaged app is `eddy-omega` with `eddyVersion` and Orca's internal version.
@@ -303,3 +344,6 @@ eddy-omega decisions:
 | O17 | 10-20 | Help → About and Settings show eddy's version: `0.1.x alpha (Orca 1.4.230)`, like eddy's `0.1.5 alpha (Code - OSS 1.141.0)`. |
 | O18 | 10-20 | Copilot chat (W3) = backport of upstream PR stablyai/orca#30899, kept verbatim (no `eddy:` markers) so it drops out at the rebase onto an Orca release that ships it, instead of a parallel eddy implementation. |
 | O19 | 10-22 | Ask is authoritative for Copilot chats, closing upstream's known limit: withhold the access-raising commands, confirm autopilot and `allow_all` off at start, revert them when Copilot reports one on (end the chat if it refuses). eddy code (`src/main/eddy/acp-ask-guard.ts`) with `eddy:` hooks in the ACP adapter, options, prompt check and Copilot's launch row. The shared withheld-command check now matches the command's name in any text block, which also tightens Antigravity's `/logout`. |
+| O20 | 10-22 | Keep the **workspace** as the stable layout/session container, but separate it from the **active source root**. One workspace may have one canonical writable root, plus attached read-only reference roots from the same repo or other repos. |
+| O21 | 10-22 | Root switching must preserve the workspace layout and agent/chat state. Cross-repo investigation should be modeled as a reference root or an active-root switch, not as a workspace that tries to own multiple writable Git roots at once. |
+| O22 | 10-22 | Right-panel browsing must work on attached reference roots: file explorer, git history, blame and diff views are read operations for investigation work and should not require the reference root to become the workspace's primary writable target. |
