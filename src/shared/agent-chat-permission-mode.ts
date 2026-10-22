@@ -53,6 +53,7 @@ const AGENT_CHAT_PERMISSION_MODES_BY_AGENT = new Map<string, AgentChatPermission
   ['grok', ACP_CHAT_PERMISSION_MODES],
   ['opencode', ACP_CHAT_PERMISSION_MODES],
   ['omp', ACP_CHAT_PERMISSION_MODES],
+  ['copilot', ACP_CHAT_PERMISSION_MODES],
   ['antigravity', ANTIGRAVITY_CHAT_PERMISSION_MODES]
 ])
 
