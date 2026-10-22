@@ -43,6 +43,7 @@ import { readAcpRecoveryHistory } from './acp-recovery-history'
 import { stopAcpChildren, acpChildStopCapabilities } from './acp-structured-child-stop'
 import { AcpConversationCopies } from './acp-conversation-copies'
 import { supportsAcpStructuredLocation } from './acp-structured-location-support'
+import { guardAcpAsk } from '../eddy/acp-ask-guard' // eddy: Ask guard (O19)
 
 export class AcpStructuredSessionAdapter implements StructuredAgentSessionAdapter {
   /** Live children, and ones whose exit is not yet proven; a proven exit removes its entry. */
@@ -116,6 +117,7 @@ export class AcpStructuredSessionAdapter implements StructuredAgentSessionAdapte
         session.lane.dispose()
         throw new Error('closed while starting')
       }
+      await guardAcpAsk(session, input.permissionMode, this.deps.logger) // eddy: Ask guard (O19)
       this.sessions.set(sessionId, session)
       // Its saved picks restored: what it runs now is what its start resolved.
       return { ...acquisition, catalogListing: session.options.startListing() }

@@ -196,12 +196,10 @@ describe('Copilot recordings through the adapter', () => {
     expect(rig.adapter.readCommands(SESSION)).toBeUndefined()
     expect(commandsNotification.update.sessionUpdate).toBe('available_commands_update')
     rig.child().agent.notify('session/update', commandsNotification)
-    await waitFor(() => expect(rig.adapter.readCommands(SESSION)).toHaveLength(27))
+    // eddy: /allow-all, /permissions and /autopilot are withheld (src/main/eddy/acp-ask-guard.ts).
+    await waitFor(() => expect(rig.adapter.readCommands(SESSION)).toHaveLength(24))
     const commands = rig.adapter.readCommands(SESSION) ?? []
     expect(commands.map((command) => command.name)).toEqual([
-      'allow-all',
-      'permissions',
-      'autopilot',
       'compact',
       'blame',
       'chronicle',
@@ -510,8 +508,9 @@ describe('Copilot recordings through the adapter', () => {
     expect(rig.sent('session/new')).toHaveLength(0)
     // The exchange the load replayed is history: no user bubble and no reply row appear.
     expect((await rig.rig.rows()).some((row) => row.body.kind === 'message')).toBe(false)
-    // The commands it announced (before and after its own reply) survive the load.
-    await waitFor(() => expect(rig.adapter.readCommands(SESSION)).toHaveLength(27))
+    // The commands it announced (before and after its own reply) survive the load; eddy: less the
+    // three the Ask guard withholds.
+    await waitFor(() => expect(rig.adapter.readCommands(SESSION)).toHaveLength(24))
     await rig.adapter.dispatch({
       sessionId: SESSION,
       clientMessageId: 'send-1',
