@@ -72,10 +72,11 @@ describe('the model catalog contract on every registration', () => {
       (registration) => registration.modelCatalog(context()).kind === 'probe'
     ).map((registration) => registration.definition.agent)
     expect(Object.keys(probes).sort()).toEqual([...listing].sort())
-    // Every agent registered today but Antigravity lists its models before a chat.
+    // Every agent registered today but OMP, Antigravity and Copilot lists its models without a
+    // session; Copilot only learns models from a chat session.
     expect(listing.sort()).toEqual(
       STRUCTURED_AGENT_RUNTIME_REGISTRATIONS.map((registration) => registration.definition.agent)
-        .filter((agent) => agent !== 'antigravity')
+        .filter((agent) => agent !== 'omp' && agent !== 'antigravity' && agent !== 'copilot')
         .sort()
     )
   })
