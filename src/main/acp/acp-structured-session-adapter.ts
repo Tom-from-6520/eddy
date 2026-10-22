@@ -40,6 +40,7 @@ import { acpStartupFailure, isAcpReadySession } from './acp-structured-child'
 import { AcpStructuredChildren } from './acp-structured-child-lifecycle'
 import { AcpConversationCopies } from './acp-conversation-copies'
 import { supportsAcpStructuredLocation } from './acp-structured-location-support'
+import { guardAcpAsk } from '../eddy/acp-ask-guard' // eddy: Ask guard (O19)
 
 export class AcpStructuredSessionAdapter implements StructuredAgentSessionAdapter {
   private readonly children: AcpStructuredChildren
@@ -111,6 +112,7 @@ export class AcpStructuredSessionAdapter implements StructuredAgentSessionAdapte
         session.dispose()
         throw new Error('closed while starting')
       }
+      await guardAcpAsk(session, input.permissionMode, this.deps.logger) // eddy: Ask guard (O19)
       this.children.sessions.set(sessionId, session)
       return acquisition
     } catch (error) {

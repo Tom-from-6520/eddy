@@ -101,6 +101,11 @@ export class AcpStructuredOptions {
     }
   }
 
+  // eddy: the agent's config options as last reported, for the Ask guard (src/main/eddy).
+  readConfigOptions(): readonly SessionConfigOption[] {
+    return this.configOptions
+  }
+
   adoptModel(modelId: string): void {
     if (this.models) {
       this.models = { ...this.models, currentModelId: modelId }

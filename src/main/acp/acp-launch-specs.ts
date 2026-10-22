@@ -2,11 +2,12 @@
 // speaks protocol extensions). Nothing outside `acp-dialects/` branches on an agent's name.
 
 import { join } from 'node:path'
-import { GENERIC_ACP_DIALECT, type AcpDialect } from './acp-dialects/acp-dialect'
+import type { AcpDialect } from './acp-dialects/acp-dialect'
 import { GROK_ACP_DIALECT } from './acp-dialects/grok-dialect'
 import { OMP_ACP_DIALECT } from './acp-dialects/omp-dialect'
 import { OPENCODE_ACP_DIALECT } from './acp-dialects/opencode-dialect'
 import { ANTIGRAVITY_ACP_DIALECT } from './acp-dialects/antigravity-dialect'
+import { COPILOT_ACP_DIALECT } from '../eddy/acp-ask-guard' // eddy: Ask guard (O19)
 import { directoryAccountBinding, type AcpAccountBinding } from './acp-account-binding'
 import { openCodeAcpAccountBinding } from '../opencode/opencode-structured-account-home'
 import { scrubOpenCodeAcpEnvironment } from '../opencode/opencode-acp-environment'
@@ -376,7 +377,8 @@ const COPILOT_LAUNCH_SPEC: AcpLaunchSpec = {
   args: ({ pluginDir }) => ['--acp', '--stdio', ...(pluginDir ? ['--plugin-dir', pluginDir] : [])],
   // Applies last, after the user's environment: a shell-wide allow-all must not override Ask.
   env: { COPILOT_ALLOW_ALL: 'false' },
-  dialect: GENERIC_ACP_DIALECT,
+  // eddy: the shared dialect minus /allow-all, /autopilot and /permissions (src/main/eddy).
+  dialect: COPILOT_ACP_DIALECT,
   loginCommand: agentSessionSignInFor('copilot')?.loginCommand ?? [],
   // The directory Copilot's terminal chats read too: hooks and settings line up with this chat.
   account: directoryAccountBinding('COPILOT_HOME', (homePath) => join(homePath, '.copilot')),
