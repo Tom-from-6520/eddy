@@ -334,6 +334,24 @@ describe('markWorktreeVisited', () => {
     expect(store.getState().activeWorktreeId).toBeNull()
     expect(store.getState().activeWorkspaceKey).toBeNull()
   })
+
+  it('preserves the current workspace key while switching the active worktree root', () => {
+    const store = createTestStore()
+    const current = makeWorktree({ id: 'repo1::/a', repoId: 'repo1', path: '/a' })
+    const next = makeWorktree({ id: 'repo1::/b', repoId: 'repo1', path: '/b' })
+    store.setState({
+      worktreesByRepo: { repo1: [current, next] },
+      activeWorktreeId: current.id,
+      activeWorkspaceKey: worktreeWorkspaceKey(current.id),
+      activeWorkspaceExecutionHostId: 'local'
+    } as Partial<AppState>)
+
+    store.getState().setActiveWorktree(next.id, 'local')
+
+    expect(store.getState().activeWorktreeId).toBe(next.id)
+    expect(store.getState().activeWorkspaceKey).toBe(worktreeWorkspaceKey(current.id))
+    expect(store.getState().activeWorkspaceExecutionHostId).toBe('local')
+  })
 })
 
 describe('setRenamingWorktreeId', () => {
