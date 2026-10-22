@@ -22,7 +22,6 @@
   ```
 - eddy-omega's `main` is a short stack of commits on top of an upstream **stable release tag** (currently `upstream/v1.4.230`).
 - Orca tags a stable release every 1–3 days, each on a short release branch cut from `main` (the tagged commit is not on `upstream/main`). Don't chase every release: sync every week or two, or when an upstream fix is needed. Only rebase onto stable tags (never `-rc.N`).
-- Before a sync, read **"Carried changes: rebase notes" in [`DESIGN.md`](./DESIGN.md) §7.1**: it lists the upstream work eddy-omega carries ahead of Orca (Copilot chat, a backport of stablyai/orca#30899, plus its Ask guard), how to tell whether the new tag already ships it, which commits to drop or keep (use `git rebase -i --onto …`), and how to resolve its known conflicts.
 - To move to a newer release:
   ```powershell
   git fetch upstream
@@ -34,7 +33,7 @@
 - Check what eddy-omega changes: `git log --oneline upstream/<base-tag>..main` and `git diff --stat upstream/<base-tag> main`.
 - After a sync:
   - `pnpm install --frozen-lockfile`, then review the `pnpm-lock.yaml` and `pnpm-workspace.yaml` diffs (new packages, new `allowBuilds` or `minimumReleaseAgeExclude` entries) before running anything else.
-  - Type-check and run eddy's tests (see Building). For carried changes, also run the checks in `DESIGN.md` §7.1 ("Verify after the sync"): eddy CI does not run the ported Copilot tests.
+  - Type-check and run eddy's tests (see Building).
   - Workflows that upstream *adds* start out enabled on GitHub: run `pwsh eddy/scripts/disable-upstream-workflows.ps1 -Repo <owner>/eddy-omega`.
 - **Never `git push --tags`**: it would publish the ~1,000 `upstream/*` tags. Push single tags only.
 

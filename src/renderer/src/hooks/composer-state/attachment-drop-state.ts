@@ -187,7 +187,7 @@ export function useAttachmentDropState(input: AttachmentDropStateInput) {
         },
         sourcePaths,
         destinationDir,
-        { ensureDestinationDir: true, assertCurrent }
+        { ensureDestinationDir: true, assertCurrent, nameExtensionlessImages: true }
       )
       const uploadResult = collectComposerDropResult(results)
       if (uploadResult.failureCount > 0 && canReportFailure()) {

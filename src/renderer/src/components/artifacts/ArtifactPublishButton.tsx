@@ -11,6 +11,7 @@ import { useAppStore } from '@/store'
 import { ArtifactPublishedLinkPanel } from './ArtifactPublishedLinkPanel'
 import { getPublishedArtifactLink } from './artifact-published-link-client'
 import { publishArtifactFromSurface } from './artifact-publish-flow'
+import { OrcaSignInButton, OrcaSignInWaitNotice } from '../OrcaSignInProgress'
 
 type PublishedLinkLookup = {
   key: string
@@ -53,7 +54,6 @@ export function ArtifactPublishButton({
   const lookupSequence = useRef(0)
   const popoverContentRef = useRef<HTMLDivElement>(null)
   const authStatus = useAppStore((state) => state.orcaProfileAuthStatus)
-  const connect = useAppStore((state) => state.connectCurrentOrcaProfile)
   const openSettingsPage = useAppStore((state) => state.openSettingsPage)
   const openSettingsTarget = useAppStore((state) => state.openSettingsTarget)
   const settings = useAppStore((state) => state.settings)
@@ -212,12 +212,10 @@ export function ArtifactPublishButton({
                   )}
                 </p>
               </div>
-              <Button
-                type="button"
+              <OrcaSignInButton
                 variant="outline"
                 size="xs"
                 disabled={authStatus?.configured !== true}
-                onClick={() => void connect()}
               >
                 {authStatus?.state === 'reconnect-required'
                   ? translate(
@@ -225,9 +223,10 @@ export function ArtifactPublishButton({
                       'Sign in again'
                     )
                   : translate('auto.components.artifacts.ArtifactPublishButton.signIn', 'Sign in')}
-              </Button>
+              </OrcaSignInButton>
             </div>
           ) : null}
+          {!signedIn ? <OrcaSignInWaitNotice /> : null}
 
           {!sharingEnabled ? (
             <div className={cn('space-y-2', !signedIn && 'border-t border-border/60 pt-3')}>

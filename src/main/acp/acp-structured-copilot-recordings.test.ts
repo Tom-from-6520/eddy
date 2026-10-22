@@ -177,13 +177,13 @@ describe('Copilot recordings through the adapter', () => {
       initialize: initialized,
       script: (agent) => agent.on('session/new', (frame) => agent.reply(frame, sessionNew))
     })
-    const acquired = await rig.acquire()
+    await rig.acquire()
     expect(rig.sent('initialize')[0]?.params).toEqual(frames[0]?.message.params)
     expect(rig.sent('session/new')[0]?.params).toEqual(frames[3]?.message.params)
     expect(initialized.agentInfo).toMatchObject({ name: 'Copilot', version: '1.0.98' })
     expect(initialized.authMethods?.map((method) => method.id)).toEqual(['copilot-login'])
     expect(rig.sent('authenticate')).toEqual([])
-    expect(acquired.link).toMatchObject({
+    expect(rig.started().link).toMatchObject({
       handle: { transport: 'acp', agent: 'copilot', nativeId: 'session-1' },
       origin: 'created'
     })
@@ -196,10 +196,12 @@ describe('Copilot recordings through the adapter', () => {
     expect(rig.adapter.readCommands(SESSION)).toBeUndefined()
     expect(commandsNotification.update.sessionUpdate).toBe('available_commands_update')
     rig.child().agent.notify('session/update', commandsNotification)
-    // eddy: /allow-all, /permissions and /autopilot are withheld (src/main/eddy/acp-ask-guard.ts).
-    await waitFor(() => expect(rig.adapter.readCommands(SESSION)).toHaveLength(24))
+    await waitFor(() => expect(rig.adapter.readCommands(SESSION)).toHaveLength(27))
     const commands = rig.adapter.readCommands(SESSION) ?? []
     expect(commands.map((command) => command.name)).toEqual([
+      'allow-all',
+      'permissions',
+      'autopilot',
       'compact',
       'blame',
       'chronicle',
@@ -249,10 +251,10 @@ describe('Copilot recordings through the adapter', () => {
       script: (agent) =>
         agent.on('session/new', (frame) => agent.fail(frame, refusal.code, refusal.message))
     })
-    const failure = await rig.acquire().catch((error: unknown) => error)
+    await rig.acquire()
     // The standard auth-required code, so the shared mapping refuses the chat as signed out.
-    expect(failure).toBeInstanceOf(AgentSessionAcquisitionRefusal)
-    expect(failure).toMatchObject({ reason: 'notSignedIn' })
+    expect(rig.openFailure()).toBeInstanceOf(AgentSessionAcquisitionRefusal)
+    expect(rig.openFailure()).toMatchObject({ reason: 'notSignedIn' })
     expect(rig.sent('session/new')).toHaveLength(1)
     expect(rig.sent('authenticate')).toEqual([])
   })
@@ -508,9 +510,8 @@ describe('Copilot recordings through the adapter', () => {
     expect(rig.sent('session/new')).toHaveLength(0)
     // The exchange the load replayed is history: no user bubble and no reply row appear.
     expect((await rig.rig.rows()).some((row) => row.body.kind === 'message')).toBe(false)
-    // The commands it announced (before and after its own reply) survive the load; eddy: less the
-    // three the Ask guard withholds.
-    await waitFor(() => expect(rig.adapter.readCommands(SESSION)).toHaveLength(24))
+    // The commands it announced (before and after its own reply) survive the load.
+    await waitFor(() => expect(rig.adapter.readCommands(SESSION)).toHaveLength(27))
     await rig.adapter.dispatch({
       sessionId: SESSION,
       clientMessageId: 'send-1',

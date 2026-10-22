@@ -163,6 +163,7 @@ const AGENTS = [
   'omp',
   'pi',
   'antigravity',
+  'opencode2',
   'copilot'
 ] as const
 type Agent = (typeof AGENTS)[number]
@@ -176,6 +177,7 @@ const VERSIONS: Record<Agent, string> = {
   omp: '17.1.0',
   pi: '1.1.0',
   antigravity: '1.3.0',
+  opencode2: '2.0.20',
   // The CLI's verbatim form, trailing sentence period included.
   copilot: 'GitHub Copilot CLI 1.0.98.'
 }
@@ -293,6 +295,7 @@ function configuredSettings(): Partial<GlobalSettings> {
       omp: '',
       pi: '',
       antigravity: '',
+      opencode2: '',
       copilot: ''
     },
     agentDefaultEnv: Object.fromEntries(
@@ -359,6 +362,7 @@ function accountHomeFor(agent: Agent): AgentSessionAccountHome {
     case 'grok':
       return { variable: 'GROK_HOME', path: directory('grok') }
     case 'opencode':
+    case 'opencode2':
       return { kind: 'opencode', locator: { kind: 'unmanaged' } }
     case 'omp':
       return { variable: 'PI_CODING_AGENT_DIR', path: directory('omp') }
@@ -389,6 +393,7 @@ async function resumedHandleFor(
     }
     case 'grok':
     case 'opencode':
+    case 'opencode2':
     case 'omp':
     case 'antigravity':
     case 'copilot':
@@ -443,7 +448,6 @@ async function recordFor(
       leaseDeadlineAt: 0,
       lastRenewedAt: 0,
       handoffOperationId: null,
-      journalCheckpoint: null,
       claimKeyId: 'parity-key',
       claimStatus: 'released',
       unreconciled: false,
