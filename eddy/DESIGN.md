@@ -91,7 +91,7 @@ This table was written before studying Orca in depth. Treat it as hypotheses for
 ## 6. Agent backends
 
 - Orca is agent-agnostic. Native chat currently covers Claude, Codex, Pi and some ACP agents.
-- **Copilot CLI as a native chat:** Copilot CLI supports `--acp` (Agent Client Protocol over stdio). Adding one ACP launch spec (`agent`, `command: 'copilot'`, `args: ['--acp', …]`, sign-in command) next to the existing ones in `acp-launch-specs.ts` should give Copilot a real chat UI. Small, contained change → good first eddy feature (W3).
+- **Copilot CLI as a native chat (W3, backported 10-20, O18):** Copilot CLI serves ACP with `copilot --acp --stdio`. Upstream PR [stablyai/orca#30899](https://github.com/stablyai/orca/pull/30899) adds one `COPILOT_LAUNCH_SPEC` to `acp-launch-specs.ts` (plus sign-in, permission-mode and visuals rows), which gives Copilot an agent-session tab with the message rail, markdown and inline visuals, model/effort picker, permission cards, Stop, `/compact` and reattach. eddy-omega carries it as a verbatim backport until an Orca release ships it. Limits: needs a **stable** Copilot CLI ≥ 1.0.98 (pre-releases such as `1.0.101-0` keep the terminal); Copilot's own `allow_all`/autopilot can still auto-approve while the chat says Ask; no transcript import (terminal Copilot conversations can't be resumed in chat); models appear after the first session.
 - The employer-internal agent hub and its internal MCP servers are **out of scope** for eddy-omega.
 - **MCP:** each agent reads its own MCP config. Plan (from eddy): an eddy MCP catalog; each Working Context enables a subset; passed to each agent in its own format. Q8.
 
@@ -175,7 +175,7 @@ Built as `APP_HOME_DIR_NAME` / `REPO_DATA_DIR_NAME` in `src/shared/eddy/eddy-bui
 5. **T2 — Orca study** (§1.1): use eddy omega for real work for a few days and read the code behind what you use, then write **§5.1 "Orca's model"** in Orca's own terms: projects/repos/workspaces, the sidebar, tabs/splits and layout (answers Q-L1), native chat sessions (how many per workspace, history), file explorer and source control (what drives them), keybindings and the command palette, settings/profiles. End with a gap list: each need in §3–4 → "Orca already does it", "small change to an Orca concept", or "new concept".
 6. **W-S2 — folders** (§9.1): ~~`~/.eddy` (W-S2a)~~ and ~~`.eddy/` (W-S2b)~~ built 10-20; test agent hooks by hand (Windows, WSL, SSH). `eddy.yaml` (W-S2c) together with W-B1.
 7. **T3 — First change in Orca's terms:** the smallest gap from T2 that makes Orca feel like §3–4 (replacing the old "Working Context spike"). It must work with Orca's file explorer, source control, layout and keybindings. **Measure the upstream files touched and hook lines added.**
-8. **W3 — Copilot CLI as an ACP native chat** (§6).
+8. **W3 — Copilot CLI as an ACP native chat** (§6) — 10-20: backported stablyai/orca#30899 (O18); try it by hand on Windows from the next alpha. Not run locally: the Microsoft npm feed proxy lacks a locked package (`@vitest/mocker@5.0.5`), so `pnpm install --frozen-lockfile` fails on the work machine.
 9. **Upstream sync** onto the newest stable Orca tag (after W-S1 and again after T3) to measure rebase cost.
 10. **T4 — Decide:** continue eddy-omega or return to eddy. Pass if T3 needs only small hooks in upstream files, the chat is good enough, and the syncs go through without major conflicts.
 11. If continuing: UI rebranding hook (W-B1, §8), exe/CLI names (Q-I1), signing, show `eddyVersion` in Settings/About, MCP/skills panels (Q-UI1).
@@ -230,3 +230,4 @@ eddy-omega decisions:
 | O15 | 10-20 | Home folder `~/.orca` → `~/.eddy` (shared folder with the VS Code eddy; no name clashes). Per-repo `.orca/` → `.eddy/`, `orca.yaml` → `eddy.yaml` (proposed: fall back to `orca.yaml`). |
 | O16 | 10-20 | MCP / skills panels: decide later (Q-UI1). |
 | O17 | 10-20 | Help → About and Settings show eddy's version: `0.1.x alpha (Orca 1.4.230)`, like eddy's `0.1.5 alpha (Code - OSS 1.141.0)`. |
+| O18 | 10-20 | Copilot chat (W3) = backport of upstream PR stablyai/orca#30899, kept verbatim (no `eddy:` markers) so it drops out at the rebase onto an Orca release that ships it, instead of a parallel eddy implementation. |
