@@ -3,7 +3,14 @@
 > **Committed and public.** Unlike eddy's design doc, this one contains no employer-internal details, so it lives in the repo. Keep it that way: no internal tool names, cluster URLs, tokens or machine paths.
 > **How to use:** read §1–4 for what eddy-omega is and why it's built on Orca, §5 for how it maps onto Orca, §11 for what's next. When you decide something, add a row to §13 and update the affected section.
 > **Lineage:** eddy-omega carries the design of [eddy](https://github.com/Tom-from-6520/eddy) (a VS Code fork). Decisions that still hold are copied into §13; eddy's own docs are history only.
-> Last updated: 2026-10-20 (eddy omega 0.1.1 alpha; base `upstream/v1.4.230`).
+> Last updated: 2026-10-22 (eddy omega 0.1.1 alpha; base `upstream/v1.4.230`).
+
+## 0. Public-repo hygiene and upstream noise
+
+- Keep this repo focused on `eddy-omega` itself: product decisions, fork-local code, and the design work that matters to us.
+- Do not cite unrelated upstream Orca PRs or issues in public docs, PR descriptions, commit messages, or session notes unless there is a direct and necessary engineering reason.
+- In particular, do not mention the unmerged Orca PR `#30899` or its linked issue in this repo's public materials. It adds noise to the upstream PR and does not help this fork.
+- If a reference to upstream work is needed, keep it generic (for example: "upstream sync" or "upstream fork note") and avoid issue numbers or original-thread references that create spam on the upstream PR.
 
 ---
 
@@ -347,3 +354,4 @@ eddy-omega decisions:
 | O20 | 10-22 | Keep the **workspace** as the stable layout/session container, but separate it from the **active source root**. One workspace may have one canonical writable root, plus attached read-only reference roots from the same repo or other repos. |
 | O21 | 10-22 | Root switching must preserve the workspace layout and agent/chat state. Cross-repo investigation should be modeled as a reference root or an active-root switch, not as a workspace that tries to own multiple writable Git roots at once. |
 | O22 | 10-22 | Right-panel browsing must work on attached reference roots: file explorer, git history, blame and diff views are read operations for investigation work and should not require the reference root to become the workspace's primary writable target. |
+| O23 | 10-22 | Public repo docs and PRs must not mention unrelated upstream Orca issue/PR references, including the unmerged PR `#30899` and its linked issue, because they create spam on the original upstream thread without value to this fork. |
