@@ -157,7 +157,7 @@ Read this before every upstream sync. Each entry says what eddy-omega carries, h
 
 **Ask guard hooks in upstream files** (`git grep -n "eddy:" -- src/main/acp`):
 
-- `acp-structured-session-adapter.ts`: `await guardAcpAsk(session, input.permissionMode, this.deps.logger)` right after `acquireAcpStructuredSession` returns and before `this.sessions.set(...)`, plus its import. It lives here because `acp-structured-acquire.ts` is at the 300-line `max-lines` limit.
+- `acp-structured-handshake.ts`: `await guardAcpAsk(child, acquire.permissionMode, deps.logger)` in `initializeAcpStructuredSession`, right after the new session's options (and permission-mode config) are adopted and before the handle link is built, plus its import. It must run here, not after `acquireAcpStructuredSession`: since v1.4.237 `session/new` happens in `child.open()`, so the options are empty until the handshake. `guardAcpAsk` accepts a child whose `lane` is still null.
 - `acp-structured-options.ts`: `readConfigOptions()` accessor on `AcpStructuredOptions`.
 - `acp-prompt-content.ts`: `isWithheldCommand` delegates to `sendsWithheldAcpCommand` (matches a command's name in any text block, arguments and case aside; this also tightens Antigravity's `/logout`), plus its import.
 - `acp-launch-specs.ts`: Copilot's `dialect: COPILOT_ACP_DIALECT` (the generic dialect plus `withheldCommands: ['allow-all', 'autopilot', 'permissions']`), plus its import; the file imports only `type AcpDialect` from `acp-dialect` again.
@@ -191,7 +191,7 @@ As of 10-22 the PR is open at head `c5408b6e79` and no `upstream/v*` tag has it.
   - nothing else in a row depends on the index.
 - **Test-helper drift:** the ported tests target upstream's newer helpers. Once the new base has `AcpAdapterRig.started()`/`openFailure()` and the function form of `structuredAgentSupportsLaunch`, drop `94335ec384`'s edits and take the PR's test versions. CI's type-check finds any other drift.
 - **Production files:** these applied cleanly to v1.4.230. If upstream amended the PR (its `headRefOid` is no longer `c5408b6e79`), re-cherry-pick the new commits instead of carrying the old ones.
-- **Ask guard:** if upstream changed `acp-structured-session-adapter.ts`, `AcpStructuredOptions`, `withheldCommands`, the session-update types (`config_option_update`, `current_mode_update`) or `setConfigOption`, adjust the hooks.
+- **Ask guard:** if upstream changed `acp-structured-handshake.ts`, `AcpStructuredOptions`, `withheldCommands`, the session-update types (`config_option_update`, `current_mode_update`) or `setConfigOption`, adjust the hooks.
   - The guard depends on Copilot's protocol facts: config ids `mode` and `allow_all`; values `on`/`off`; mode ids `…/session-modes#agent` and `…#autopilot`.
   - If Copilot renames them, the guard silently does nothing. Its test reads `copilot-v1-handshake.jsonl`, so check new recordings when upstream re-records them.
 
