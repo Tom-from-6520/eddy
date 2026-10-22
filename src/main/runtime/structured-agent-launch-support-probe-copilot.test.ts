@@ -83,7 +83,7 @@ afterEach(async () => {
 })
 
 const base = { nativeChatInheritShellEnvironment: true, nativeChatShellEnvironmentVariables: [] }
-const workspace = 'id:w'
+const workspace = async (): Promise<string> => root
 
 describe.skipIf(process.platform === 'win32')('Copilot create check and launch, real probe', () => {
   it('checks and launches the binary the Command setting names, through the captured version form', async () => {
