@@ -146,17 +146,6 @@ export function createSetActiveWorktree(
         return s
       }
 
-      const currentWorkspaceScope = s.activeWorkspaceKey
-        ? parseWorkspaceKey(s.activeWorkspaceKey)
-        : null
-      const keepsCurrentWorkspaceKey =
-        !isWorkspaceKey(worktreeId) &&
-        ((currentWorkspaceScope?.type === 'worktree' &&
-          s.activeWorktreeId === currentWorkspaceScope.worktreeId) ||
-          (!currentWorkspaceScope &&
-            s.activeWorkspaceKey != null &&
-            s.activeWorkspaceKey === s.activeWorktreeId &&
-            s.activeWorktreeId != null))
       return {
         ...stateTransition?.patch,
         ...reconciliation?.patch,
@@ -164,9 +153,7 @@ export function createSetActiveWorktree(
         activeWorktreeId: worktreeId,
         activeWorkspaceKey: isWorkspaceKey(worktreeId)
           ? worktreeId
-          : keepsCurrentWorkspaceKey
-            ? (s.activeWorkspaceKey ?? worktreeWorkspaceKey(worktreeId))
-            : worktreeWorkspaceKey(worktreeId),
+          : worktreeWorkspaceKey(worktreeId),
         activeWorkspaceExecutionHostId: executionHostId ?? null,
         activePendingCreationId: null,
         activeFileId,
