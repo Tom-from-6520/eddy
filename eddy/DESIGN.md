@@ -3,7 +3,7 @@
 > **Committed and public.** Unlike eddy's design doc, this one contains no employer-internal details, so it lives in the repo. Keep it that way: no internal tool names, cluster URLs, tokens or machine paths.
 > **How to use:** read §1–4 for what eddy-omega is and why it's built on Orca, §5 for how it maps onto Orca, §11 for what's next. When you decide something, add a row to §13 and update the affected section.
 > **Lineage:** eddy-omega carries the design of [eddy](https://github.com/Tom-from-6520/eddy) (a VS Code fork). Decisions that still hold are copied into §13; eddy's own docs are history only.
-> Last updated: 2026-10-22 (eddy omega 0.1.1 alpha; base `upstream/v1.4.230`).
+> Last updated: 2026-10-23 (eddy omega 0.1.7 alpha; base `upstream/main` at `d667e54b02`, stamped Orca 1.4.237; see O24).
 
 ## 0. Public-repo hygiene and upstream noise
 
@@ -132,7 +132,7 @@ This table was written before studying Orca in depth. Treat it as hypotheses for
 ## 6. Agent backends
 
 - Orca is agent-agnostic. Native chat currently covers Claude, Codex, Pi and some ACP agents.
-- **Copilot CLI as a native chat (W3, backported 10-20, O18):** Copilot CLI serves ACP with `copilot --acp --stdio`. Upstream PR [stablyai/orca#30899](https://github.com/stablyai/orca/pull/30899) adds one `COPILOT_LAUNCH_SPEC` to `acp-launch-specs.ts` (plus sign-in, permission-mode and visuals rows), which gives Copilot an agent-session tab with the message rail, markdown and inline visuals, model/effort picker, permission cards, Stop, `/compact` and reattach. eddy-omega carries it as a verbatim backport until an Orca release ships it. Limits: needs a **stable** Copilot CLI ≥ 1.0.98 (pre-releases such as `1.0.101-0` keep the terminal); no transcript import (terminal Copilot conversations can't be resumed in chat); models appear after the first session. **Ask is authoritative (O19):** an Ask chat withholds `/allow-all`, `/autopilot` and `/permissions` (arguments or not), starts only once Copilot confirms autopilot and `allow_all` are off, and turns either back off when Copilot reports it on (ending the chat if Copilot refuses); Copilot can still approve a request in the moment before that write lands. Code: `src/main/eddy/acp-ask-guard.ts`. Rebase notes: §7.1.
+- **Copilot CLI as a native chat (W3, backported 10-20, O18):** Copilot CLI serves ACP with `copilot --acp --stdio`. Upstream PR [stablyai/orca#30899](https://github.com/stablyai/orca/pull/30899) adds one `COPILOT_LAUNCH_SPEC` to `acp-launch-specs.ts` (plus sign-in, permission-mode and visuals rows), which gives Copilot an agent-session tab with the message rail, markdown and inline visuals, model/effort picker, permission cards, Stop, `/compact` and reattach. eddy-omega carries it as a verbatim backport until an Orca release ships it. Limits: needs Copilot CLI ≥ 1.0.98 (since 0.1.7, under upstream's minimum-version rule, a prerelease at or above it such as `1.0.101-0` also runs, and an older one keeps the terminal); no transcript import (terminal Copilot conversations can't be resumed in chat); models appear after the first session. **Ask is authoritative (O19):** an Ask chat withholds `/allow-all`, `/autopilot` and `/permissions` (arguments or not), starts only once Copilot confirms autopilot and `allow_all` are off, and turns either back off when Copilot reports it on (ending the chat if Copilot refuses); Copilot can still approve a request in the moment before that write lands. Code: `src/main/eddy/acp-ask-guard.ts`. Rebase notes: §7.1.
 - The employer-internal agent hub and its internal MCP servers are **out of scope** for eddy-omega.
 - **MCP:** each agent reads its own MCP config. Plan (from eddy): an eddy MCP catalog; each Working Context enables a subset; passed to each agent in its own format. Q8.
 
@@ -140,7 +140,7 @@ This table was written before studying Orca in depth. Treat it as hypotheses for
 
 Details and commands: [`eddy/AGENTS.md`](./AGENTS.md).
 
-- Light fork, **rebase model**: `main` = eddy-omega's commits on top of an upstream **stable release tag** (currently `upstream/v1.4.230`).
+- Light fork, **rebase model**: `main` = eddy-omega's commits on top of an upstream **stable release tag** (currently an exception: `upstream/main` at `d667e54b02`, see O24 and §7.1 "Base off a stable tag").
 - `origin` = eddy-omega (personal GitHub account), `upstream` = stablyai/orca (push disabled). Upstream fetches only `main` and `v*` tags, stored as `upstream/v*`, so they never collide with eddy-omega's own `v0.x` release tags.
 - Orca releases every 1–3 days (tags on short release branches). Sync every week or two onto the latest stable tag; never onto `-rc` tags.
 - Upstream edits stay small and marked `// eddy:`; new code goes in `src/{main,renderer/src,shared}/eddy/`.
@@ -149,6 +149,12 @@ Details and commands: [`eddy/AGENTS.md`](./AGENTS.md).
 ### 7.1 Carried changes: rebase notes
 
 Read this before every upstream sync. Each entry says what eddy-omega carries, how to tell whether upstream has caught up, and how to resolve the conflicts it causes.
+
+#### Base off a stable tag (O24)
+
+**What is carried** (since 0.1.7): `main` sits on `upstream/main` at `d667e54b02` (10-22), not on a tag, to ship upstream's fix `752f531b0a` (ACP and Pi chats refused a message sent after picking another model with no effort, shown as "The agent didn't accept this message."). No stable tag had it yet. One extra commit, "Stamp Orca version 1.4.237 on the upstream/main base", sets `package.json` `version` back to `1.4.237`, because `upstream/main` carries a stale `1.4.214` that only Orca's release-branch commit replaces.
+
+**Next sync:** go back to a stable tag that contains `752f531b0a` (`git tag --contains 752f531b0a --list "upstream/v*"`). Rebase with `git rebase --onto upstream/<new-tag> d667e54b02 main`, drop the version-stamp commit (the tag stamps its own version), and remove this entry and the exception notes in §7 and `eddy/AGENTS.md`.
 
 #### Copilot chat (W3: O18, O19)
 
@@ -177,7 +183,7 @@ gh pr view 30899 --repo stablyai/orca --json state,mergeCommit,headRefOid
 git grep -n "COPILOT_LAUNCH_SPEC" upstream/<new-tag> -- src/main/acp/acp-launch-specs.ts
 ```
 
-As of 10-22 the PR is open at head `c5408b6e79` and no `upstream/v*` tag has it.
+As of 10-23 the PR is still open at head `c5408b6e79`; neither a `upstream/v*` tag nor `upstream/main` at `d667e54b02` has it, so the 0.1.7 sync replayed the backport (case B).
 
 **Case A: the new tag ships Copilot chat.**
 
@@ -196,7 +202,8 @@ As of 10-22 the PR is open at head `c5408b6e79` and no `upstream/v*` tag has it.
   - non-configured cases come first (5 per agent, in `AGENTS` order), then configured cases (2 per agent);
   - the chat scratch folder is the first 32 hex characters of `sha256(session id)`;
   - nothing else in a row depends on the index.
-- **Test-helper drift:** the ported tests target upstream's newer helpers. Once the new base has `AcpAdapterRig.started()`/`openFailure()` and the function form of `structuredAgentSupportsLaunch`, drop `94335ec384`'s edits and take the PR's test versions. CI's type-check finds any other drift.
+- **Test-helper drift:** the ported tests target upstream's newer helpers. Once the new base has `AcpAdapterRig.started()`/`openFailure()` and the function form of `structuredAgentSupportsLaunch`, drop `94335ec384`'s edits and take the PR's test versions. CI's type-check finds any other drift. (Done in the 0.1.7 sync: the base has both, so the recordings test is the PR's again.)
+- **API drift met in the 0.1.7 sync** (commit "Port the carried Copilot chat to upstream's minimum-version check"): upstream replaced `supportsVersion` with `minimumVersions` (Copilot: `['1.0.98']`; its launch-resolution and version-probe tests follow OMP's port) and removed `imagePrompts` from `AcpLaunchSpec` (the agent's `initialize` answer decides; Copilot advertises images). OMP gained a catalog probe, so only Antigravity and Copilot stay out of the catalog-discovery list. The launch-parity snapshot only shifted ids, by 5 for upstream's `opencode2`.
 - **Production files:** these applied cleanly to v1.4.230. If upstream amended the PR (its `headRefOid` is no longer `c5408b6e79`), re-cherry-pick the new commits instead of carrying the old ones.
 - **Ask guard:** if upstream changed `acp-structured-handshake.ts`, `AcpStructuredOptions`, `withheldCommands`, the session-update types (`config_option_update`, `current_mode_update`) or `setConfigOption`, adjust the hooks.
   - The guard depends on Copilot's protocol facts: config ids `mode` and `allow_all`; values `on`/`off`; mode ids `…/session-modes#agent` and `…#autopilot`.
@@ -355,3 +362,4 @@ eddy-omega decisions:
 | O21 | 10-22 | Root switching must preserve the workspace layout and agent/chat state. Cross-repo investigation should be modeled as a reference root or an active-root switch, not as a workspace that tries to own multiple writable Git roots at once. |
 | O22 | 10-22 | Right-panel browsing must work on attached reference roots: file explorer, git history, blame and diff views are read operations for investigation work and should not require the reference root to become the workspace's primary writable target. |
 | O23 | 10-22 | Public repo docs and PRs must not mention unrelated upstream Orca issue/PR references, including the unmerged PR `#30899` and its linked issue, because they create spam on the original upstream thread without value to this fork. |
+| O24 | 10-23 | One-off exception to O3: 0.1.7 rebases onto `upstream/main` (`d667e54b02`) instead of a stable tag, to ship upstream fix `752f531b0a` (Copilot and other ACP chats refused messages after a model change with "The agent didn't accept this message."). `package.json` keeps Orca `1.4.237` through a stamp commit. The next sync returns to a stable tag (§7.1 "Base off a stable tag"). |

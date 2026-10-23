@@ -20,7 +20,7 @@
   git config --add remote.upstream.fetch '+refs/tags/v*:refs/tags/upstream/v*'
   git fetch upstream
   ```
-- eddy-omega's `main` is a short stack of commits on top of an upstream **stable release tag** (currently `upstream/v1.4.230`).
+- eddy-omega's `main` is a short stack of commits on top of an upstream **stable release tag** (currently an exception: `upstream/main` at `d667e54b02` plus a commit stamping Orca `1.4.237`; see `DESIGN.md` O24 and §7.1 "Base off a stable tag" before the next sync).
 - Orca tags a stable release every 1–3 days, each on a short release branch cut from `main` (the tagged commit is not on `upstream/main`). Don't chase every release: sync every week or two, or when an upstream fix is needed. Only rebase onto stable tags (never `-rc.N`).
 - Before a sync, read **"Carried changes: rebase notes" in [`DESIGN.md`](./DESIGN.md) §7.1**: it lists the upstream work eddy-omega carries ahead of Orca (Copilot chat, a backport of stablyai/orca#30899, plus its Ask guard), how to tell whether the new tag already ships it, which commits to drop or keep (use `git rebase -i --onto …`), and how to resolve its known conflicts.
 - To move to a newer release:
