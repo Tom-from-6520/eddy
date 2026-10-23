@@ -71,7 +71,10 @@ describe('checkAgentCliVersion', () => {
 
   it('reads GitHub Copilot output that ends with a sentence period as supported', async () => {
     prints('GitHub Copilot CLI 1.0.98.\n')
-    expect(await probeAgentCliVersion(INPUT, (v) => isStableCliVersionFrom(v, '1.0.98'))).toBe(true)
+    expect(await checkAgentCliVersion(INPUT, ['1.0.98'])).toEqual({
+      status: 'ready',
+      version: '1.0.98'
+    })
   })
 
   it.each([

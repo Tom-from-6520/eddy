@@ -48,7 +48,7 @@ function resolver(
     resolveLaunchEnv: () => options.launchEnv ?? {},
     resolveCommand: (command) => `/resolved/${command}`,
     inheritedEnv: {},
-    probeVersion: options.probeVersion ?? (async (_input, supports) => supports('1.0.98'))
+    probeVersion: options.probeVersion ?? (async () => ({ version: '1.0.98' }))
   })
 }
 
@@ -117,47 +117,33 @@ describe('Copilot ACP launch resolution', () => {
     ).rejects.toThrow(/pin COPILOT_HOME/)
   })
 
-  it.each(['1.0.98', '1.0.99', '1.4.0', '2.0.0'])('admits Copilot %s', async (version) => {
-    const launch = resolver(copilotRecord(), {
-      probeVersion: async (_input, supports) => supports(version)
-    })
-    await expect(launch({ identity })).resolves.toMatchObject({ args: ['--acp', '--stdio'] })
-  })
-
-  it.each(['1.0.97', '0.9.0', '2.0.0-beta.1'])(
-    'refuses Copilot %s before spawning it, as a host that cannot run the chat',
+  it.each(['1.0.98', '1.0.99', '1.4.0', '2.0.0', '2.0.0-beta.1'])(
+    'admits Copilot %s',
     async (version) => {
-      const launch = resolver(copilotRecord(), {
-        probeVersion: async (_input, supports) => supports(version)
-      })
+      const launch = resolver(copilotRecord(), { probeVersion: async () => ({ version }) })
+      await expect(launch({ identity })).resolves.toMatchObject({ args: ['--acp', '--stdio'] })
+    }
+  )
+
+  it.each(['1.0.97', '0.9.0'])(
+    'refuses Copilot %s before spawning it as too old',
+    async (version) => {
+      const launch = resolver(copilotRecord(), { probeVersion: async () => ({ version }) })
       await expect(launch({ identity })).rejects.toMatchObject({
-        refusal: {
-          code: 'structured_agent_session_unsupported',
-          details: { reason: 'hostUnsupported' }
-        }
+        installation: { agent: 'copilot', installedVersion: version, minimumVersion: '1.0.98' }
       })
     }
   )
 
-  it('refuses when the version cannot be read', async () => {
-    const launch = resolver(copilotRecord(), { probeVersion: async () => false })
-    await expect(launch({ identity })).rejects.toMatchObject({
-      refusal: { code: 'structured_agent_session_unsupported' }
-    })
-  })
-
   it('re-probes at every launch, so a release a PATH change swapped in refuses without falling back', async () => {
     let installed = '1.0.98'
     const launch = resolver(copilotRecord(), {
-      probeVersion: async (_input, supports) => supports(installed)
+      probeVersion: async () => ({ version: installed })
     })
     await expect(launch({ identity })).resolves.toMatchObject({ command: '/resolved/copilot' })
     installed = '1.0.96'
     await expect(launch({ identity })).rejects.toMatchObject({
-      refusal: {
-        code: 'structured_agent_session_unsupported',
-        details: { reason: 'hostUnsupported' }
-      }
+      installation: { agent: 'copilot', installedVersion: '1.0.96', minimumVersion: '1.0.98' }
     })
   })
 
@@ -166,7 +152,7 @@ describe('Copilot ACP launch resolution', () => {
       NonNullable<Parameters<typeof createAcpStructuredLaunchResolver>[1]['probeVersion']>
     >[0][] = []
     const launch = await resolver(copilotRecord(), {
-      probeVersion: async (input, supports) => (asked.push(input), supports('1.0.98'))
+      probeVersion: async (input) => (asked.push(input), { version: '1.0.98' })
     })({ identity })
     expect(asked).toEqual([{ program: launch.command, cwd: launch.cwd, env: launch.env }])
   })

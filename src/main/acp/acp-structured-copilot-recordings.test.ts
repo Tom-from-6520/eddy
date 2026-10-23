@@ -177,13 +177,13 @@ describe('Copilot recordings through the adapter', () => {
       initialize: initialized,
       script: (agent) => agent.on('session/new', (frame) => agent.reply(frame, sessionNew))
     })
-    const acquired = await rig.acquire()
+    await rig.acquire()
     expect(rig.sent('initialize')[0]?.params).toEqual(frames[0]?.message.params)
     expect(rig.sent('session/new')[0]?.params).toEqual(frames[3]?.message.params)
     expect(initialized.agentInfo).toMatchObject({ name: 'Copilot', version: '1.0.98' })
     expect(initialized.authMethods?.map((method) => method.id)).toEqual(['copilot-login'])
     expect(rig.sent('authenticate')).toEqual([])
-    expect(acquired.link).toMatchObject({
+    expect(rig.started().link).toMatchObject({
       handle: { transport: 'acp', agent: 'copilot', nativeId: 'session-1' },
       origin: 'created'
     })
@@ -249,10 +249,10 @@ describe('Copilot recordings through the adapter', () => {
       script: (agent) =>
         agent.on('session/new', (frame) => agent.fail(frame, refusal.code, refusal.message))
     })
-    const failure = await rig.acquire().catch((error: unknown) => error)
+    await rig.acquire()
     // The standard auth-required code, so the shared mapping refuses the chat as signed out.
-    expect(failure).toBeInstanceOf(AgentSessionAcquisitionRefusal)
-    expect(failure).toMatchObject({ reason: 'notSignedIn' })
+    expect(rig.openFailure()).toBeInstanceOf(AgentSessionAcquisitionRefusal)
+    expect(rig.openFailure()).toMatchObject({ reason: 'notSignedIn' })
     expect(rig.sent('session/new')).toHaveLength(1)
     expect(rig.sent('authenticate')).toEqual([])
   })

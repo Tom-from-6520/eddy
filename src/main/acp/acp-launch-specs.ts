@@ -378,13 +378,12 @@ const COPILOT_LAUNCH_SPEC: AcpLaunchSpec = {
   account: directoryAccountBinding('COPILOT_HOME', (homePath) => join(homePath, '.copilot')),
   // `~/.local/bin` and Windows' npm prefix are directories the shared resolver already searches.
   installDirectories: () => [],
-  // Stable releases from 1.0.98, the release verified to serve `--acp --stdio`.
-  supportsVersion: (version) => isStableCliVersionFrom(version, '1.0.98'),
+  // 1.0.98 is the release verified to serve `--acp --stdio`.
+  minimumVersions: ['1.0.98'],
   modelDiscovery: {
     kind: 'unavailable',
     reason: 'initialize lists no models; each session fills the catalog'
   },
-  imagePrompts: true,
   visualsSkill: loadCopilotVisualsSkill,
   compaction: true,
   transcriptImport: null,
