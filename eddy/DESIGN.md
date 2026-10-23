@@ -113,6 +113,22 @@ This makes the form match the actual workflow: the user often wants a safe, fast
 - Execution hosts: local, WSL, SSH, and paired remote Orca runtimes. Mobile companion via Orca's relay service.
 - State lives in the renderer store (`src/renderer/src/store/`, Zustand slices) and is persisted by main (`src/shared/persisted-state-types.ts`).
 
+#### Study notes 10-23: folder workspaces as investigation workspaces (v0.1.7)
+Folder workspaces are the closest Orca concept to an "Investigate first" workspace (§4): named, not tied to a branch, and they can be opened as several parallel workspaces on the same folder.
+- **What one is:** `FolderWorkspace` (`src/shared/folder-workspace-types.ts`). It has an `id` (a fresh `randomUUID()` per create), a `name`, a `folderPath`, a `projectGroupId` and optional linked tasks. Its workspace key is `folder:<id>`, so tabs, chats and layout are kept per workspace, like worktrees.
+- **Several per folder:** `createFolderWorkspace` (`src/main/persistence/restoring-sessions/folder-workspace-operations.ts`) never checks whether another folder workspace uses the same path. Two investigations over the same parent folder (for example, one on repos A + B and one on B + C) are two folder workspaces with their own names, tabs and chats.
+- **How to create one (UI):**
+  1. Use **Add project** on the *parent folder* and choose the "group them and work from the parent folder" import. This makes a project group with a `parentPath`.
+  2. In **New Workspace**, pick the **group** (not one of its repos) as the project. Only groups with a `parentPath` are offered (`src/renderer/src/lib/new-workspace-project-options.ts`, `buildNewWorkspaceCreateTargetOptions`).
+  3. Name the workspace and create. Repeat for each investigation.
+- **What it already gives:** the full window with the file explorer and a saved layout. Chats find their folder again by workspace id. Worktrees can be attached under it via workspace lineage (`src/renderer/src/components/right-sidebar/FolderWorkspaceWorktreesPanel.tsx`).
+- **Limits found:**
+  - Source control: none in a folder workspace.
+  - Focus: one `folderPath` per workspace. Every workspace on a parent folder shows *all* its repos; nothing records which repos an investigation is about.
+  - Moving chats: a chat can't move to another workspace. `moveTabToWorkspace` (`src/shared/workspace-layout/workspace-layout-workspace-move.ts`) moves only editor tabs, and a chat's main-side record is filed under its workspace (`AgentSessionRecord.location.workspaceId`, `src/shared/agent-session-record.ts`).
+  - Project groups: a repo belongs to at most one group (`Repo.projectGroupId`, `src/shared/repo-types.ts`). Adding a repo to a second group takes it out of the first.
+- **Not the floating workspace:** the floating workspace is a single global workspace with the fixed id `FLOATING_TERMINAL_WORKTREE_ID` (`src/shared/constants.ts`). That id is special-cased across about 500 files. Its one directory comes from the `floatingTerminalCwd` setting (`src/main/ipc/floating-workspace-directory.ts`). It has no file explorer or source control, so it is a poor base for several named investigations.
+
 ### 5.2 First guess: Working Context on Orca (revisit after the Orca study)
 
 This table was written before studying Orca in depth. Treat it as hypotheses for the Orca study (§11), not a plan.
@@ -296,7 +312,7 @@ Priority order, agreed 2026-10-22:
 2. ~~**CI/CD**~~ — 10-19: `eddy-checks.yml`, `eddy-build.yml`, eddy omega identity and updater (§8). Actions enabled with every upstream workflow disabled. See §11a for verification status.
 3. ~~**T1 — Updater by hand**~~ — 10-20: installed 0.1.0 (Windows user setup), it updated itself to 0.1.1 (installed `eddyVersion` 0.1.1, installer fetched from eddy-omega's release). Building from source on the personal machine is still to do.
 4. ~~**W-S1 — Orca services**~~ (§9) — 10-20: feedback/crash blocked, star prompt off, eddy-hosted update nudges, "(orca feat)" disabled buttons; About/Settings show `eddyVersion`.
-5. **T2 — Orca study** (§1.1): use eddy omega for real work for a few days and read the code behind what you use, then write **§5.1 "Orca's model"** in Orca's own terms: projects/repos/workspaces, the sidebar, tabs/splits and layout (answers Q-L1), native chat sessions (how many per workspace, history), file explorer and source control (what drives them), keybindings and the command palette, settings/profiles. End with a gap list: each need in §3–4 → "Orca already does it", "small change to an Orca concept", or "new concept".
+5. **T2 — Orca study** (§1.1): use eddy omega for real work for a few days and read the code behind what you use, then write **§5.1 "Orca's model"** in Orca's own terms: projects/repos/workspaces, the sidebar, tabs/splits and layout (answers Q-L1), native chat sessions (how many per workspace, history), file explorer and source control (what drives them), keybindings and the command palette, settings/profiles. End with a gap list: each need in §3–4 → "Orca already does it", "small change to an Orca concept", or "new concept". 10-23: folder workspaces studied (§5.1 study notes).
 6. **W-S2 — folders** (§9.1): ~~`~/.eddy` (W-S2a)~~ and ~~`.eddy/` (W-S2b)~~ built 10-20; test agent hooks by hand (Windows, WSL, SSH). `eddy.yaml` (W-S2c) together with W-B1.
 7. **T3 — Root model change, preserving workspace layout:** build the minimal model that keeps a workspace's layout and chat sessions stable while introducing one canonical writable root plus attached read-only reference roots. This is the first concrete product behavior from the 2026-10-22 session. It should support: switching the active root; preserving tabs and agent sessions; read-only branches/snapshots from same or other repos; and explicit cross-repo investigation flows without breaking the current workspace layout model.
 8. **T3b — Right-panel reference browsing:** make the file explorer and git history panels read a selected attached root or branch snapshot, including the same-repo and cross-repo investigation cases. The goal is that an investigation branch or reference snapshot can be read and understood without being the workspace's write target.
