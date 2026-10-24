@@ -247,7 +247,7 @@ As of 10-23 the PR is still open at head `c5408b6e79`; neither a `upstream/v*` t
 - eddy code: `src/shared/eddy/project-group-workspace-filter.ts` (type, schema, normalize/update/show helpers) with its tests, and `src/renderer/src/eddy/project-group-workspace-filter-menu.tsx` (the submenu).
 - `eddy:` hooks (`git grep -n "eddy:" -- src/shared src/main src/preload src/renderer`): the field on `ProjectGroup` (`project-group-types.ts`); `normalizeProjectGroups` (`project-groups.ts`); the catalog schema (`project-section-catalog-schema.ts`); the update schemas `ProjectGroupUpdateArgs` (`repo-ipc-arg-schemas.ts`) and `ProjectGroupUpdate` (`rpc-contract/repo-params.ts`); `updates: ProjectGroupUpdates` in `project-group-operations.ts` (which also applies the field), `repository-api.ts`, `repo-state.ts` and `runtime-project-group-controller.ts`; the row planner (`sidebar-list/project-group-sections.ts`: subtree count, folder rows, project rows); the menu item in `project-group-header-actions.tsx`.
 
-**Limits:** "Folders only" also hides non-git folder repos (they are project sections). Revealing a hidden workspace won't find its sidebar row. Hosts running an older build drop the field, so their groups show both.
+**Limits:** "Folders only" also hides non-git folder repos (they are project sections; unconfirmed whether that's wanted, Q-G1). Revealing a hidden workspace won't find its sidebar row. Hosts running an older build drop the field, so their groups show both.
 
 **On sync:** if upstream adds fields to the group update type or reworks `appendProjectGroup`, re-apply the hooks; the row tests in `project-group-workspace-filter-rows.test.ts` catch planner drift.
 
@@ -350,6 +350,7 @@ Priority order, agreed 2026-10-22:
 - **Q8** MCP source of truth: eddy catalog vs. per-agent config.
 - **Q-X1** Should contexts sync across machines? Not needed yet.
 - **Q-Y1** `eddy.yaml`: read `eddy.yaml`, else `orca.yaml`, in every build (proposed, §9.1), or `eddy.yaml` only?
+- **Q-G1** Group filter "Folders only" (O25) also hides non-git folder repos in the group, because the sidebar treats them as projects, not folder workspaces. Keep that, or show them under "Folders only" too? Check while testing 0.1.8.
 
 ## 13. Decision log
 
