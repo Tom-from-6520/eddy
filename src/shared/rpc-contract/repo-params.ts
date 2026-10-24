@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { OptionalFiniteNumber, OptionalString, requiredString } from './rpc-param-primitives'
 import { createRepoUpdateSchema } from './repo-update-params'
 import { RepoSelector } from './github-repo-target-params'
+import { ProjectGroupWorkspaceKindFilterSchema } from '../eddy/project-group-workspace-filter' // eddy: workspace kind filter
 
 export const RepoPath = z.object({
   path: requiredString('Missing repo path'),
@@ -54,7 +55,8 @@ export const ProjectGroupUpdate = z.object({
     name: OptionalString,
     isCollapsed: z.boolean().optional(),
     tabOrder: OptionalFiniteNumber,
-    color: OptionalString.nullable().optional()
+    color: OptionalString.nullable().optional(),
+    workspaceKindFilter: ProjectGroupWorkspaceKindFilterSchema.optional() // eddy: workspace kind filter
   })
 })
 

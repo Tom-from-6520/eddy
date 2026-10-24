@@ -20,6 +20,7 @@ import type {
   ProjectUpdateArgs
 } from '../../shared/project-types'
 import type { BaseRefDefaultResult, BaseRefSearchResult, Repo } from '../../shared/repo-types'
+import type { ProjectGroupUpdates } from '../../shared/eddy/project-group-workspace-filter' // eddy: workspace kind filter
 
 export type RepositoryApi = {
   list: () => Promise<Repo[]>
@@ -124,7 +125,7 @@ export type ProjectGroupsApi = {
   }) => Promise<ProjectGroup>
   update: (args: {
     groupId: string
-    updates: Partial<Pick<ProjectGroup, 'name' | 'isCollapsed' | 'tabOrder' | 'color'>>
+    updates: ProjectGroupUpdates // eddy: + workspaceKindFilter
   }) => Promise<ProjectGroup | null>
   delete: (args: { groupId: string }) => Promise<boolean>
   moveProject: (args: {

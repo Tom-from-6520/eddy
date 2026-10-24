@@ -1,3 +1,5 @@
+import type { ProjectGroupWorkspaceKindFilter } from './eddy/project-group-workspace-filter' // eddy: workspace kind filter
+
 export type ProjectGroupCreatedFrom = 'manual' | 'folder-scan' | 'migration'
 
 export type ProjectGroup = {
@@ -13,6 +15,7 @@ export type ProjectGroup = {
   tabOrder: number
   isCollapsed: boolean
   color: string | null
+  workspaceKindFilter?: ProjectGroupWorkspaceKindFilter // eddy: absent = show both (src/shared/eddy)
   createdAt: number
   updatedAt: number
 }

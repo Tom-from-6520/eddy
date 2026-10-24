@@ -5,6 +5,7 @@ import type { ProjectGroup, ProjectGroupCreatedFrom } from './project-group-type
 import type { RepoKind } from './repo-types'
 import type { ProjectOrderBy } from './ui-chrome-types'
 import { hostUnionArms, salvagedOptional, salvagingArray } from './zod-salvage'
+import { ProjectGroupWorkspaceKindFilterSchema } from './eddy/project-group-workspace-filter' // eddy: workspace kind filter
 
 // The sidebar's project catalog as a reader parses it, from mobileRelay.projectSections or the
 // sidebar feed's projectCatalog domain (MobileProjectSectionCatalog is what a host sends).
@@ -74,6 +75,11 @@ export const ProjectGroupSchema = z.object({
   tabOrder: z.number(),
   isCollapsed: z.boolean(),
   color: z.string().nullable(),
+  // eddy: an unknown filter drops to absent, which shows both kinds.
+  workspaceKindFilter: salvagedOptional(
+    'workspaceKindFilter',
+    ProjectGroupWorkspaceKindFilterSchema
+  ),
   createdAt: z.number(),
   updatedAt: z.number()
 }) satisfies z.ZodType<ProjectGroup, unknown>

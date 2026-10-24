@@ -20,6 +20,7 @@ import {
   stopRepoHeaderKeyboardToggle,
   stopRepoHeaderMenuEvent
 } from './header-event-guards'
+import { ProjectGroupWorkspaceFilterMenu } from '@/eddy/project-group-workspace-filter-menu' // eddy: workspace kind filter
 
 export function ProjectGroupHeaderMenu({
   groupId,
@@ -71,6 +72,8 @@ export function ProjectGroupHeaderMenu({
         <DropdownMenuItem onSelect={() => onRename(groupId, label, hostId)}>
           {translate('auto.components.sidebar.WorktreeList.4d7b73658c', 'Rename group')}
         </DropdownMenuItem>
+        {/* eddy: workspace kind filter (src/renderer/src/eddy) */}
+        <ProjectGroupWorkspaceFilterMenu groupId={groupId} hostId={hostId} />
         <DropdownMenuItem variant="destructive" onSelect={() => onDelete(groupId, label, hostId)}>
           {translate('auto.components.sidebar.WorktreeList.902115cdbe', 'Delete group')}
         </DropdownMenuItem>

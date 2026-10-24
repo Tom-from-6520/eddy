@@ -15,6 +15,7 @@ import {
 import { FolderWorkspaceCreateRefusedError } from '../project-groups/folder-workspace-create-refusal'
 import type { RuntimeStore } from './runtime-store-contract'
 import type { RuntimeWorktreeLifecycleEvent } from './orca-runtime-core'
+import type { ProjectGroupUpdates } from '../../shared/eddy/project-group-workspace-filter' // eddy: workspace kind filter
 import {
   runtimeVisibleFolderWorkspaces,
   runtimeVisibleProjectGroups
@@ -106,7 +107,7 @@ export class RuntimeProjectGroupController {
 
   async updateGroup(
     groupId: string,
-    updates: Partial<Pick<ProjectGroup, 'name' | 'isCollapsed' | 'tabOrder' | 'color'>>
+    updates: ProjectGroupUpdates // eddy: + workspaceKindFilter
   ): Promise<ProjectGroup | null> {
     const store = this.deps.getStore()
     if (!store?.updateProjectGroup) {

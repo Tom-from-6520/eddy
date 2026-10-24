@@ -17,6 +17,11 @@ import {
   withRepoSectionDisplayLabels
 } from '../project-section-order'
 import { buildFolderWorkspaceRow } from './row-builders'
+// eddy: workspace kind filter
+import {
+  projectGroupShowsFolderWorkspaces,
+  projectGroupShowsProjects
+} from '../eddy/project-group-workspace-filter'
 
 export function appendProjectGroupSections(
   ctx: SectionAppendContext,
@@ -95,8 +100,14 @@ export function appendProjectGroupSections(
   }
 
   const getProjectGroupSubtreeCount = (groupId: string): number => {
-    const directCount = groupByProjectGroupId.get(groupId)?.length ?? 0
-    const folderWorkspaceCount = folderWorkspacesByProjectGroupId.get(groupId)?.length ?? 0
+    // eddy: count only the workspace kinds the group's filter lists.
+    const group = projectGroupsById.get(groupId)
+    const directCount = projectGroupShowsProjects(group)
+      ? (groupByProjectGroupId.get(groupId)?.length ?? 0)
+      : 0
+    const folderWorkspaceCount = projectGroupShowsFolderWorkspaces(group)
+      ? (folderWorkspacesByProjectGroupId.get(groupId)?.length ?? 0)
+      : 0
     const children = childGroupsByParentId.get(groupId) ?? []
     return children.reduce(
       (count, child) => count + getProjectGroupSubtreeCount(child.id),
@@ -118,10 +129,15 @@ export function appendProjectGroupSections(
       projectGroupDepth: depth
     })
     if (!collapsedGroups.has(key)) {
-      for (const pair of folderWorkspacesByProjectGroupId.get(projectGroup.id) ?? []) {
-        result.push(buildFolderWorkspaceRow(pair, depth + 1))
+      // eddy: the group's workspace kind filter (src/shared/eddy/project-group-workspace-filter.ts).
+      if (projectGroupShowsFolderWorkspaces(projectGroup)) {
+        for (const pair of folderWorkspacesByProjectGroupId.get(projectGroup.id) ?? []) {
+          result.push(buildFolderWorkspaceRow(pair, depth + 1))
+        }
       }
-      appendOrderedGroups(ctx, withRepoSectionDisplayLabels(repoEntries), depth + 1)
+      if (projectGroupShowsProjects(projectGroup)) {
+        appendOrderedGroups(ctx, withRepoSectionDisplayLabels(repoEntries), depth + 1)
+      }
       for (const childGroup of childGroups) {
         appendProjectGroup(childGroup, depth + 1)
       }

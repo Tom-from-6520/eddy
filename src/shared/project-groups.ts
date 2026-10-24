@@ -2,6 +2,7 @@ import { normalizeExecutionHostId } from './execution-host'
 import type { ProjectGroup, ProjectGroupCreatedFrom } from './project-group-types'
 import type { Repo } from './repo-types'
 import { createNonSecureContextUuid } from './non-secure-context-uuid'
+import { normalizeProjectGroupWorkspaceKindFilter } from './eddy/project-group-workspace-filter' // eddy: workspace kind filter
 
 export const UNGROUPED_PROJECT_GROUP_KEY = 'project-group:ungrouped'
 
@@ -73,6 +74,7 @@ export function normalizeProjectGroups(value: unknown): ProjectGroup[] {
         typeof raw.tabOrder === 'number' && Number.isFinite(raw.tabOrder) ? raw.tabOrder : 0,
       isCollapsed: raw.isCollapsed === true,
       color: typeof raw.color === 'string' ? raw.color : null,
+      ...normalizeProjectGroupWorkspaceKindFilter(raw.workspaceKindFilter), // eddy: workspace kind filter
       createdAt:
         typeof raw.createdAt === 'number' && Number.isFinite(raw.createdAt) ? raw.createdAt : now,
       updatedAt:

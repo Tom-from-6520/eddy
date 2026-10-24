@@ -7,6 +7,11 @@ import {
 } from '../../../shared/project-groups'
 import { folderWorkspaceKey } from '../../../shared/workspace-scope'
 import { removeWorkspaceSessionOwnersEverywhere } from '../restoring-sessions/session-owner-removal'
+// eddy: workspace kind filter
+import {
+  applyProjectGroupWorkspaceKindFilterUpdate,
+  type ProjectGroupUpdates
+} from '../../../shared/eddy/project-group-workspace-filter'
 
 export type ProjectGroupMutationOperations = {
   state: PersistedState
@@ -63,7 +68,7 @@ export class ProjectGroupPersistenceOperations {
 
   updateProjectGroup(
     groupId: string,
-    updates: Partial<Pick<ProjectGroup, 'name' | 'isCollapsed' | 'tabOrder' | 'color'>>
+    updates: ProjectGroupUpdates // eddy: + workspaceKindFilter
   ): ProjectGroup | null {
     const group = (this.state.projectGroups ?? []).find((entry) => entry.id === groupId)
     if (!group) {
@@ -81,6 +86,7 @@ export class ProjectGroupPersistenceOperations {
     if (updates.color !== undefined) {
       group.color = typeof updates.color === 'string' ? updates.color : null
     }
+    applyProjectGroupWorkspaceKindFilterUpdate(group, updates.workspaceKindFilter) // eddy: workspace kind filter
     group.updatedAt = Date.now()
     this.scheduleSave()
     return group

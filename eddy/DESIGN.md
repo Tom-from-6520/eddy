@@ -240,6 +240,17 @@ As of 10-23 the PR is still open at head `c5408b6e79`; neither a `upstream/v*` t
   - `/allow-all on` is refused in Ask;
   - Full access still works.
 
+#### Per-group workspace kind filter (O25)
+
+**What is carried:** a folder-backed project group's "…" menu has **Show → Worktrees and folders / Worktrees only / Folders only**. The choice is stored on the group as `workspaceKindFilter` (`'worktrees' | 'folders'`; absent = both), so it persists and syncs through the group's owning host like `color` and `isCollapsed`, and is deleted with the group. It applies in **Group by: Project** only.
+
+- eddy code: `src/shared/eddy/project-group-workspace-filter.ts` (type, schema, normalize/update/show helpers) with its tests, and `src/renderer/src/eddy/project-group-workspace-filter-menu.tsx` (the submenu).
+- `eddy:` hooks (`git grep -n "eddy:" -- src/shared src/main src/preload src/renderer`): the field on `ProjectGroup` (`project-group-types.ts`); `normalizeProjectGroups` (`project-groups.ts`); the catalog schema (`project-section-catalog-schema.ts`); the update schemas `ProjectGroupUpdateArgs` (`repo-ipc-arg-schemas.ts`) and `ProjectGroupUpdate` (`rpc-contract/repo-params.ts`); `updates: ProjectGroupUpdates` in `project-group-operations.ts` (which also applies the field), `repository-api.ts`, `repo-state.ts` and `runtime-project-group-controller.ts`; the row planner (`sidebar-list/project-group-sections.ts`: subtree count, folder rows, project rows); the menu item in `project-group-header-actions.tsx`.
+
+**Limits:** "Folders only" also hides non-git folder repos (they are project sections). Revealing a hidden workspace won't find its sidebar row. Hosts running an older build drop the field, so their groups show both.
+
+**On sync:** if upstream adds fields to the group update type or reworks `appendProjectGroup`, re-apply the hooks; the row tests in `project-group-workspace-filter-rows.test.ts` catch planner drift.
+
 ## 8. Versions, releases, updates
 
 - **Version:** `eddyVersion` in `eddy/product.json` — **0.1.x = alpha, 0.2.x = beta, 1.x = stable**; bump the patch for each release; tags `v<eddyVersion>`. `quality` names the stage.
@@ -379,3 +390,4 @@ eddy-omega decisions:
 | O22 | 10-22 | Right-panel browsing must work on attached reference roots: file explorer, git history, blame and diff views are read operations for investigation work and should not require the reference root to become the workspace's primary writable target. |
 | O23 | 10-22 | Public repo docs and PRs must not mention unrelated upstream Orca issue/PR references, including the unmerged PR `#30899` and its linked issue, because they create spam on the original upstream thread without value to this fork. |
 | O24 | 10-23 | One-off exception to O3: 0.1.7 rebases onto `upstream/main` (`d667e54b02`) instead of a stable tag, to ship upstream fix `752f531b0a` (Copilot and other ACP chats refused messages after a model change with "The agent didn't accept this message."). `package.json` keeps Orca `1.4.237` through a stamp commit. The next sync returns to a stable tag (§7.1 "Base off a stable tag"). |
+| O25 | 10-24 | Project groups get a workspace kind filter (both / worktrees only / folders only) in their "…" menu, stored on the group record (synced, deleted with the group) rather than as a per-device UI setting (§7.1 "Per-group workspace kind filter"). |
