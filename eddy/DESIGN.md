@@ -276,6 +276,8 @@ As of 10-23 the PR is still open at head `c5408b6e79`; neither a `upstream/v*` t
 
 **On sync:** drop the hooks if upstream marks these menus unknown itself (look for `effortsKnown` in `acp-structured-options.ts`). Tests: the `eddy:` cases in `acp-structured-options.test.ts` and `acp-message-execution-options.test.ts`.
 
+**Saved lists (O28):** the two hooks only change lists saved from then on. A list saved earlier still refuses the chat, and for Copilot and Antigravity only a chat replaces it, so 0.1.10 still failed. `src/main/eddy/acp-saved-effort-repair.ts` repairs such a list as it loads: in a session-listed Copilot or Antigravity list where some models have efforts, a model with none gets `effortsKnown: false`. Hook: `parseEntry` in `agent-model-catalog-persistence.ts`. Test: `acp-saved-effort-repair.test.ts`. Drop it along with the two hooks above.
+
 ## 8. Versions, releases, updates
 
 - **Version:** `eddyVersion` in `eddy/product.json` — **0.1.x = alpha, 0.2.x = beta, 1.x = stable**; bump the patch for each release; tags `v<eddyVersion>`. `quality` names the stage.
@@ -419,3 +421,4 @@ eddy-omega decisions:
 | O25 | 10-24 | Project groups get a workspace kind filter (both / worktrees only / folders only) in their "…" menu, stored on the group record (synced, deleted with the group) rather than as a per-device UI setting (§7.1 "Per-group workspace kind filter"). |
 | O26 | 10-25 | Closing a native chat keeps it listed under its workspace card until the user removes it with the row's trash button. Removing only drops the list entry; the chat stays in Agent Session History. The list is kept per device in localStorage, and terminal agents are not included (§7.1 "Kept closed chats"). |
 | O27 | 10-25 | An ACP model's effort menu is unknown, not empty, unless the session runs that model: a saved effort for another model is admitted, and dropped at send if that model has no effort option (§7.1 "ACP effort menus"). Fixes Copilot chats that never start with "Chat connection could not be confirmed." |
+| O28 | 10-25 | Model lists saved before O27 are repaired when loaded, not left to a refresh: for Copilot and Antigravity only a chat refreshes the list, and the stale list stops every chat from starting (§7.1 "ACP effort menus", "Saved lists"). |

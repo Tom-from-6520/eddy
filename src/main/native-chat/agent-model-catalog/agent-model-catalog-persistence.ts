@@ -10,6 +10,7 @@ import {
   type AgentModelCatalogListing
 } from './agent-model-catalog-entry'
 import { isStructuredAgentId } from '../../../shared/agent-session-provider-handle-encoding'
+import { repairSavedAcpEffortMenus } from '../../eddy/acp-saved-effort-repair' // eddy: O28
 
 // 3: Codex models carry `serviceTiers`; an older file would offer Fast with no tier to send.
 const SCHEMA_VERSION = 3
@@ -136,7 +137,7 @@ function parseEntry(value: unknown): AgentModelCatalogEntry | null {
     row.agent,
     row.fingerprint,
     parseListing(row.discovered),
-    parseListing(row.live),
+    repairSavedAcpEffortMenus(row.agent, parseListing(row.live)), // eddy: O28
     configuredModelId && typeof configured?.at === 'number'
       ? {
           modelId: configuredModelId,
