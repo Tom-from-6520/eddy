@@ -267,6 +267,15 @@ As of 10-23 the PR is still open at head `c5408b6e79`; neither a `upstream/v*` t
 
 **On sync:** if upstream reworks `closeUnifiedTab`'s agent-session branch or the card's secondary rows, re-apply the two hooks; `kept-chat-sessions-close-hook.test.ts` catches a lost close hook.
 
+#### ACP effort menus for models a session doesn't run (O27)
+
+**What is carried:** an ACP session reports a thought-level menu only for the model it runs (Copilot does), but upstream records every other model's menu as empty, an explicit "no efforts". The saved catalog then refused a new chat whose saved effort belongs to such a model ("copilot model … does not offer effort high", shown as "Chat connection could not be confirmed."), and the catalog never refreshed because no chat could start. Two `eddy:` hooks:
+
+- `acp-structured-options.ts` `read()`: a model other than the running one gets `effortsKnown: false` when the session has an effort option, so admission admits its saved effort.
+- `acp-message-execution-options.ts` `applyAcpMessageOptions`: an effort is skipped when, after the model write, the agent offers no effort option, so an effort kept from another model doesn't refuse the message.
+
+**On sync:** drop the hooks if upstream marks these menus unknown itself (look for `effortsKnown` in `acp-structured-options.ts`). Tests: the `eddy:` cases in `acp-structured-options.test.ts` and `acp-message-execution-options.test.ts`.
+
 ## 8. Versions, releases, updates
 
 - **Version:** `eddyVersion` in `eddy/product.json` — **0.1.x = alpha, 0.2.x = beta, 1.x = stable**; bump the patch for each release; tags `v<eddyVersion>`. `quality` names the stage.
@@ -409,3 +418,4 @@ eddy-omega decisions:
 | O24 | 10-23 | One-off exception to O3: 0.1.7 rebases onto `upstream/main` (`d667e54b02`) instead of a stable tag, to ship upstream fix `752f531b0a` (Copilot and other ACP chats refused messages after a model change with "The agent didn't accept this message."). `package.json` keeps Orca `1.4.237` through a stamp commit. The next sync returns to a stable tag (§7.1 "Base off a stable tag"). |
 | O25 | 10-24 | Project groups get a workspace kind filter (both / worktrees only / folders only) in their "…" menu, stored on the group record (synced, deleted with the group) rather than as a per-device UI setting (§7.1 "Per-group workspace kind filter"). |
 | O26 | 10-25 | Closing a native chat keeps it listed under its workspace card until the user removes it with the row's trash button. Removing only drops the list entry; the chat stays in Agent Session History. The list is kept per device in localStorage, and terminal agents are not included (§7.1 "Kept closed chats"). |
+| O27 | 10-25 | An ACP model's effort menu is unknown, not empty, unless the session runs that model: a saved effort for another model is admitted, and dropped at send if that model has no effort option (§7.1 "ACP effort menus"). Fixes Copilot chats that never start with "Chat connection could not be confirmed." |

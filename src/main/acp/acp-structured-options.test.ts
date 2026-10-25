@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { AcpStructuredOptions } from './acp-structured-options'
 import { GROK_ACP_DIALECT } from './acp-dialects/grok-dialect'
+import { assertAgentSessionOptionsAdmitted } from '../runtime/agent-session-record-options'
 
 const configOptions = [
   {
@@ -33,9 +34,10 @@ describe('ACP session options', () => {
     const options = new AcpStructuredOptions()
     options.adoptSession({ configOptions })
     const { models, current } = options.read()
-    // The effort menu belongs to the model running now; nothing is anyone's default.
+    // The effort menu belongs to the model running now; another model's is unknown, and nothing
+    // is anyone's default.
     expect(models).toEqual([
-      { id: 'model-a', label: 'Model A', isDefault: false, efforts: [] },
+      { id: 'model-a', label: 'Model A', isDefault: false, efforts: [], effortsKnown: false },
       {
         id: 'model-b',
         label: 'Model B',
@@ -117,6 +119,29 @@ describe('ACP session options', () => {
       { value: 'high', label: 'High' }
     ])
     expect(modelB?.defaultEffort).toBeUndefined()
+  })
+
+  // eddy: Copilot reports efforts only for the model a session runs.
+  it('admits a saved effort for a model the session does not run', () => {
+    const options = new AcpStructuredOptions()
+    options.adoptSession({ configOptions })
+    const { models } = options.read()
+    expect(() =>
+      assertAgentSessionOptionsAdmitted('copilot', models, { model: 'model-a', effort: 'high' })
+    ).not.toThrow()
+    // The running model's own menu still decides.
+    expect(() =>
+      assertAgentSessionOptionsAdmitted('copilot', models, { model: 'model-b', effort: 'max' })
+    ).toThrow('agent_session_operation_invalid')
+  })
+
+  it('keeps every model effortless when the session offers no effort option', () => {
+    const options = new AcpStructuredOptions()
+    options.adoptSession({ configOptions: [configOptions[0]!] })
+    expect(options.read().models).toEqual([
+      { id: 'model-a', label: 'Model A', isDefault: false, efforts: [] },
+      { id: 'model-b', label: 'Model B', isDefault: false, efforts: [] }
+    ])
   })
 })
 
