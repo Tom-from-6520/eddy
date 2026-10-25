@@ -35,6 +35,11 @@ export async function applyAcpMessageOptions(
     if (session.options.currentProof.has(key) && session.options.reported()[key] === value) {
       continue
     }
+    // eddy: a model the agent gives no effort option runs without one; an effort kept from
+    // another model is dropped rather than refusing the message.
+    if (key === 'effort' && session.options.write(key, value) === null) {
+      continue
+    }
     try {
       await setOption(key, value)
     } catch (error) {

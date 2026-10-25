@@ -175,7 +175,12 @@ export class AcpStructuredOptions {
     const models: AgentSessionModelOption[] = listed.map((model) => {
       const info = this.models?.availableModels.find((entry) => entry.modelId === model.id)
       const advertised = info ? this.dialect.modelEfforts?.(info) : undefined
-      const sessionMenu = { efforts: model.id === currentModel ? sessionEfforts : [] }
+      const sessionMenu =
+        model.id === currentModel
+          ? { efforts: sessionEfforts }
+          : // eddy: the session's effort menu is the running model's only; another model's is
+            // unknown, not empty, so it neither refuses nor drops that model's effort.
+            { efforts: [], ...(effortOption ? { effortsKnown: false as const } : {}) }
       return {
         ...model,
         isDefault: false,
