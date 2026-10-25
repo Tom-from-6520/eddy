@@ -251,6 +251,22 @@ As of 10-23 the PR is still open at head `c5408b6e79`; neither a `upstream/v*` t
 
 **On sync:** if upstream adds fields to the group update type or reworks `appendProjectGroup`, re-apply the hooks; the row tests in `project-group-workspace-filter-rows.test.ts` catch planner drift.
 
+#### Kept closed chats (O26)
+
+**What is carried:** closing a native chat's tab no longer drops it from its workspace card. Below the live agent rows the sidebar lists the closed chats: a hollow dot, the agent icon, the title and "closed X ago". Clicking a row reopens the chat through `activateAiVaultStructuredSession`, the same path Agent Session History uses. The trash button on hover only removes the row from this list; the chat stays in Agent Session History. Closing a chat in upstream only hides its tab, while the host keeps the record and journal, so a kept entry is just a pointer: `sessionId` plus `worktreeId`.
+
+- eddy code: `src/renderer/src/eddy/kept-chat-sessions.ts` (a localStorage store `eddy:keptChatSessions:v1`, capped at 50 per workspace, newest first, plus the close hook `keepClosedChatTab`) and `src/renderer/src/eddy/KeptChatSessionRows.tsx` (the rows), with tests `kept-chat-sessions.test.ts` and `kept-chat-sessions-close-hook.test.ts`.
+- `eddy:` hooks: `closeUnifiedTab` in `store/slices/tabs/tabs-close-actions.ts` calls `keepClosedChatTab` for a user close. A close counts as a user close when it has an owning host, the chat isn't provisional, and `recordInteraction` isn't `false`, which excludes teardown and launch replacement. `worktree-card-secondary-rows.tsx` renders `<KeptChatSessionRows>` after `WorktreeCardAgents`.
+
+**Limits:**
+- Only native (structured) chats are kept; terminal agents such as the Copilot CLI are not.
+- The list lives per device in localStorage. It doesn't sync, and paired or mobile clients don't see it.
+- Rows show only when the card's inline-agents property is on.
+- Removing a workspace or repo doesn't clear its entries yet (they are orphaned and hidden).
+- Close paths that don't pass `recordInteraction: false` also keep the chat: resume-here replacement and host-twin teardown.
+
+**On sync:** if upstream reworks `closeUnifiedTab`'s agent-session branch or the card's secondary rows, re-apply the two hooks; `kept-chat-sessions-close-hook.test.ts` catches a lost close hook.
+
 ## 8. Versions, releases, updates
 
 - **Version:** `eddyVersion` in `eddy/product.json` — **0.1.x = alpha, 0.2.x = beta, 1.x = stable**; bump the patch for each release; tags `v<eddyVersion>`. `quality` names the stage.
@@ -392,3 +408,4 @@ eddy-omega decisions:
 | O23 | 10-22 | Public repo docs and PRs must not mention unrelated upstream Orca issue/PR references, including the unmerged PR `#30899` and its linked issue, because they create spam on the original upstream thread without value to this fork. |
 | O24 | 10-23 | One-off exception to O3: 0.1.7 rebases onto `upstream/main` (`d667e54b02`) instead of a stable tag, to ship upstream fix `752f531b0a` (Copilot and other ACP chats refused messages after a model change with "The agent didn't accept this message."). `package.json` keeps Orca `1.4.237` through a stamp commit. The next sync returns to a stable tag (§7.1 "Base off a stable tag"). |
 | O25 | 10-24 | Project groups get a workspace kind filter (both / worktrees only / folders only) in their "…" menu, stored on the group record (synced, deleted with the group) rather than as a per-device UI setting (§7.1 "Per-group workspace kind filter"). |
+| O26 | 10-25 | Closing a native chat keeps it listed under its workspace card until the user removes it with the row's trash button. Removing only drops the list entry; the chat stays in Agent Session History. The list is kept per device in localStorage, and terminal agents are not included (§7.1 "Kept closed chats"). |

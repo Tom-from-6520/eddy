@@ -31,6 +31,7 @@ import type { TuiAgent } from '../../../../../shared/tui-agent'
 import { isTuiAgent } from '../../../../../shared/tui-agent-config'
 import { LOCAL_EXECUTION_HOST_ID } from '../../../../../shared/execution-host'
 import { forgetDesktopCreatedServerTab } from '@/lib/desktop-created-server-tabs'
+import { keepClosedChatTab } from '@/eddy/kept-chat-sessions' // eddy: kept closed chats
 
 export function createTabsCloseActions(
   set: TabsSliceSet,
@@ -93,6 +94,10 @@ export function createTabsCloseActions(
         } else {
           // Closing still removes the tab; no host can be named to stop its chat on.
           console.warn('[structured-agent-session] close found no owning host', tab.entityId)
+        }
+        // eddy: keep the closed chat listed until archived (teardown/replace pass recordInteraction: false).
+        if (target && !provisional && opts?.recordInteraction !== false) {
+          keepClosedChatTab(tab, worktreeId, state.settings?.tabAutoGenerateTitle === true)
         }
         get().clearNativeChatLaunchDraft(structuredAgentSessionTabId(tab.entityId))
         // The unsent draft stays: it belongs to the conversation, which can be reopened from history.

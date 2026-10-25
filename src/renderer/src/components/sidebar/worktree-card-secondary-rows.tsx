@@ -7,6 +7,8 @@ import { translate } from '@/i18n/i18n'
 import { cn } from '@/lib/utils'
 import { LinearAgentSkillSetupPrompt } from './LinearAgentSkillSetupPrompt'
 import WorktreeCardAgents from './WorktreeCardAgents'
+// eddy: kept closed chats
+import { KeptChatSessionRows } from '@/eddy/KeptChatSessionRows'
 import type { WorktreeCardPresentation } from './worktree-card-presentation'
 import type { WorktreeCardController } from './use-worktree-card-controller'
 
@@ -92,6 +94,8 @@ export function WorktreeCardSecondaryRows({
           className={hasMetaRow || remoteBranchConflict ? 'mt-0' : '-mt-1'}
         />
       )}
+      {/* eddy: closed chats stay listed until archived */}
+      {showInlineAgentList && <KeptChatSessionRows worktreeId={worktree.id} />}
 
       {showLineageChildChip && (
         <div
