@@ -1,5 +1,5 @@
 'use strict'
-// electron-builder config for eddy omega release builds:
+// electron-builder config for eddy release builds:
 //   pnpm exec electron-builder --config eddy/build/electron-builder.eddy.config.cjs --win
 const { join } = require('node:path')
 const base = require('../../config/electron-builder.config.cjs')

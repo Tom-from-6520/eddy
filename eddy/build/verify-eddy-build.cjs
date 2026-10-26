@@ -1,9 +1,9 @@
 'use strict'
-// Fails an eddy release build that lacks eddy omega's identity or updater switch:
+// Fails an eddy release build that lacks eddy's identity or updater switch:
 //   node eddy/build/verify-eddy-build.cjs <unpacked app resources dir>
 // - out/ must not contain an unsubstituted EDDY_VERSION (the switch would read as off, and
 //   the app would update itself from upstream Orca);
-// - the packaged package.json must carry eddy omega's name and eddyVersion, and Orca's version.
+// - the packaged package.json must carry eddy's name and eddyVersion, and Orca's version.
 const { readdirSync, readFileSync } = require('node:fs')
 const { join } = require('node:path')
 const { readEddyVersion } = require('./eddy-electron-builder.cjs')
@@ -43,7 +43,7 @@ function main([resourcesDir]) {
   const asar = require('@electron/asar')
   const packaged = JSON.parse(asar.extractFile(join(resourcesDir, 'app.asar'), 'package.json'))
   const orcaVersion = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).version
-  const expected = { name: 'eddy-omega', eddyVersion: readEddyVersion(root), version: orcaVersion }
+  const expected = { name: 'eddy', eddyVersion: readEddyVersion(root), version: orcaVersion }
   for (const [key, value] of Object.entries(expected)) {
     if (packaged[key] !== value) {
       throw new Error(`packaged package.json ${key} is ${packaged[key]}, expected ${value}`)

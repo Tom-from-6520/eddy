@@ -270,7 +270,7 @@ export const electronViteConfig: UserConfig = {
       ORCA_DIAGNOSTICS_TOKEN_URL: ORCA_DIAGNOSTICS_TOKEN_URL_LITERAL,
       ORCA_BUILD_COMMIT: ORCA_BUILD_COMMIT_LITERAL,
       ...DARK_BUILD_DEFINES,
-      ...eddyViteDefines() // eddy: eddy omega identity/updater switch
+      ...eddyViteDefines() // eddy: eddy identity/updater switch
     },
     // Why: @xterm/headless declares "exports": null in package.json, which
     // prevents Vite's default resolver from finding the CJS entry. Point
@@ -297,7 +297,7 @@ export const electronViteConfig: UserConfig = {
     define: {
       ORCA_BUILD_COMMIT: ORCA_BUILD_COMMIT_LITERAL,
       ...DARK_BUILD_DEFINES,
-      ...eddyViteDefines() // eddy: release-notes links use eddy-omega's repo
+      ...eddyViteDefines() // eddy: release-notes links use eddy's repo
     },
     resolve: {
       alias: {

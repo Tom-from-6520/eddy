@@ -55,26 +55,26 @@ describe('eddy electron-builder config', () => {
       env: releaseEnv,
       eddyDir
     })
-    assert.equal(config.appId, 'dev.eddy.omega')
-    assert.equal(config.productName, 'eddy-omega')
+    assert.equal(config.appId, 'dev.eddy')
+    assert.equal(config.productName, 'eddy')
     assert.deepEqual(config.extraMetadata, {
-      name: 'eddy-omega',
-      productName: 'eddy-omega',
+      name: 'eddy',
+      productName: 'eddy',
       eddyVersion: '0.1.3'
     })
-    assert.equal(config.nsis.artifactName, 'eddy-omega-0.1.3-windows-x64-setup.${ext}')
+    assert.equal(config.nsis.artifactName, 'eddy-0.1.3-windows-x64-setup.${ext}')
     assert.equal(config.nsis.shortcutName, 'eddy')
     assert.equal(config.nsis.createDesktopShortcut, 'always')
-    assert.equal(config.appImage.artifactName, 'eddy-omega-0.1.3-linux-x86_64.${ext}')
-    assert.equal(config.deb.artifactName, 'eddy-omega-0.1.3-linux-amd64.${ext}')
-    assert.equal(config.deb.packageName, 'eddy-omega')
+    assert.equal(config.appImage.artifactName, 'eddy-0.1.3-linux-x86_64.${ext}')
+    assert.equal(config.deb.artifactName, 'eddy-0.1.3-linux-amd64.${ext}')
+    assert.equal(config.deb.packageName, 'eddy')
     assert.deepEqual(config.deb.depends, ['xvfb'])
-    assert.equal(config.linux.desktop.entry.StartupWMClass, 'eddy-omega')
+    assert.equal(config.linux.desktop.entry.StartupWMClass, 'eddy')
     assert.deepEqual(config.linux.target, ['AppImage', 'deb'])
     assert.deepEqual(config.publish, {
       provider: 'github',
       owner: 'Tom-from-6520',
-      repo: 'eddy-omega',
+      repo: 'eddy',
       releaseType: 'draft'
     })
     assert.deepEqual(config.files, ['!src{,/**/*}'])
@@ -94,16 +94,16 @@ describe('eddy electron-builder config', () => {
 
   it('names artifacts after eddyVersion', () => {
     assert.deepEqual(eddyArtifactNames('0.2.0'), {
-      windowsSetup: 'eddy-omega-0.2.0-windows-x64-setup.exe',
-      linuxAppImage: 'eddy-omega-0.2.0-linux-x86_64.AppImage',
-      linuxDeb: 'eddy-omega-0.2.0-linux-amd64.deb'
+      windowsSetup: 'eddy-0.2.0-windows-x64-setup.exe',
+      linuxAppImage: 'eddy-0.2.0-linux-x86_64.AppImage',
+      linuxDeb: 'eddy-0.2.0-linux-amd64.deb'
     })
   })
 
   it("runs Orca's AppImage check on a link with Orca's file name, then removes it", () => {
     const dir = mkdtempSync(join(tmpdir(), 'eddy-appimage-test-'))
     try {
-      const file = join(dir, 'eddy-omega-0.1.0-linux-x86_64.AppImage')
+      const file = join(dir, 'eddy-0.1.0-linux-x86_64.AppImage')
       writeFileSync(file, 'appimage-bytes')
       const seen = []
       const hook = withOrcaAppImageName((context) => {
@@ -113,12 +113,12 @@ describe('eddy electron-builder config', () => {
         })
       })
       hook({ file, arch: 1 })
-      hook({ file: join(dir, 'eddy-omega-0.1.0-linux-amd64.deb'), arch: 1 })
+      hook({ file: join(dir, 'eddy-0.1.0-linux-amd64.deb'), arch: 1 })
       assert.equal(basename(seen[0].file), 'orca-linux.AppImage')
       assert.equal(seen[0].bytes, 'appimage-bytes')
       assert.equal(existsSync(seen[0].file), false)
-      assert.equal(basename(seen[1].file), 'eddy-omega-0.1.0-linux-amd64.deb')
-      assert.deepEqual(readdirSync(dir), ['eddy-omega-0.1.0-linux-x86_64.AppImage'])
+      assert.equal(basename(seen[1].file), 'eddy-0.1.0-linux-amd64.deb')
+      assert.deepEqual(readdirSync(dir), ['eddy-0.1.0-linux-x86_64.AppImage'])
     } finally {
       rmSync(dir, { recursive: true, force: true })
     }
@@ -144,7 +144,7 @@ describe('eddy electron-builder config', () => {
       env: releaseEnv,
       eddyDir
     })
-    assert.equal(config.appId, 'dev.eddy.omega')
+    assert.equal(config.appId, 'dev.eddy')
     assert.equal(typeof config.beforePack, 'function')
     assert.equal(typeof config.win.signtoolOptions.sign, 'function')
     assert.equal(config.linux.executableName, 'orca-ide')

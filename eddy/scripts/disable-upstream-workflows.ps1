@@ -1,15 +1,15 @@
 <#
 .SYNOPSIS
-  Disables every GitHub Actions workflow on the eddy-omega repo except eddy's own.
+  Disables every GitHub Actions workflow on the eddy repo except eddy's own.
 
 .DESCRIPTION
   Orca ships ~90 workflows (push/PR triggers, scheduled builds, self-hosted runners,
-  cloud deployments). None should run on eddy-omega. Run this after the first push
+  cloud deployments). None should run on eddy. Run this after the first push
   and after every upstream sync, because workflows that upstream adds start enabled.
   Only workflows whose file name starts with "eddy-" stay enabled.
 
 .EXAMPLE
-  pwsh eddy/scripts/disable-upstream-workflows.ps1 -Repo Tom-from-6520/eddy-omega -WhatIf
+  pwsh eddy/scripts/disable-upstream-workflows.ps1 -Repo Tom-from-6520/eddy -WhatIf
 #>
 [CmdletBinding(SupportsShouldProcess)]
 param(

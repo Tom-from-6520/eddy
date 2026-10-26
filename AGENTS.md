@@ -1,5 +1,6 @@
 <!-- eddy: fork-specific instructions -->
-> **eddy-omega fork:** also read [`eddy/AGENTS.md`](./eddy/AGENTS.md) (fork workflow) and [`eddy/DESIGN.md`](./eddy/DESIGN.md) (design) before changing code.
+
+> **eddy fork:** also read [`eddy/AGENTS.md`](./eddy/AGENTS.md) (fork workflow) and [`eddy/DESIGN.md`](./eddy/DESIGN.md) (design) before changing code.
 
 # Design System
 

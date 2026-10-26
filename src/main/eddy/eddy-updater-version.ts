@@ -2,7 +2,7 @@ import { app } from 'electron'
 import { EDDY_BUILD_VERSION } from '../../shared/eddy/eddy-build'
 
 /**
- * The version the updater compares releases against. eddy omega releases are versioned by
+ * The version the updater compares releases against. eddy releases are versioned by
  * eddyVersion (0.1.x), while app.getVersion() stays Orca's version for peer compatibility.
  */
 export function getUpdaterAppVersion(): string {
@@ -11,7 +11,7 @@ export function getUpdaterAppVersion(): string {
 
 /**
  * electron-updater takes its current version from app.getVersion() when it loads and only
- * installs a manifest whose version is greater. Point it at eddyVersion so eddy omega's
+ * installs a manifest whose version is greater. Point it at eddyVersion so eddy's
  * release manifests (which carry eddyVersion) compare correctly.
  */
 export function applyEddyUpdaterVersion(

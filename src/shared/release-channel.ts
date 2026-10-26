@@ -112,7 +112,7 @@ export function requiresManualDevChannelInstall(options: {
 }
 
 export function getReleaseRepoForChannel(channel: ReleaseChannel): string {
-  // eddy: every channel resolves to eddy-omega's releases in eddy release builds.
+  // eddy: every channel resolves to eddy's releases in eddy release builds.
   return eddyAwareReleaseRepo(CHANNEL_RELEASE_REPOS[channel])
 }
 

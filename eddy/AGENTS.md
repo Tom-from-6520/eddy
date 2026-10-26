@@ -1,8 +1,8 @@
-# Agent instructions (eddy-omega)
+# Agent instructions (eddy)
 
-**eddy-omega** is a light fork of [Orca](https://github.com/stablyai/orca) built around **Working Contexts**: named units of work (a project, feature or incident) that group agent threads, context files and read-only background material, and restore their layout when you switch back. It is the Orca-based successor experiment to [eddy](https://github.com/Tom-from-6520/eddy) (a VS Code fork).
+**eddy** is a light fork of [Orca](https://github.com/stablyai/orca) built around **Working Contexts**: named units of work (a project, feature or incident) that group agent threads, context files and read-only background material, and restore their layout when you switch back. It succeeds an earlier VS Code fork, also called eddy (retired; "eddy-vscode" in `DESIGN.md`). Until 10-26 this repo was named `eddy-omega` (`DESIGN.md` O29).
 
-- `eddy/` holds eddy-omega's own docs, scripts and version. The rest of the repo is Orca plus eddy-omega's changes.
+- `eddy/` holds eddy's own docs, scripts and version. The rest of the repo is Orca plus eddy's changes.
 - [`eddy/DESIGN.md`](./DESIGN.md) is the source of truth for design decisions. Read it first. When a decision is made or reversed, add a row to its Decision Log and update the affected sections and open questions.
 - Orca's root [`AGENTS.md`](../AGENTS.md) still applies to all code: style guide, lint ratchets, cross-platform rules, SSH and folder-workspace use cases.
 - Keep changes to upstream Orca files minimal. Put new code in eddy-owned folders (`src/main/eddy/`, `src/renderer/src/eddy/`, `src/shared/eddy/`, tests next to the code) and only add small hook lines to upstream files, marked with an `// eddy:` comment, so rebases stay cheap.
@@ -10,8 +10,8 @@
 
 ## Syncing with Orca (rebase model)
 
-- Remotes: `origin` = eddy-omega, `upstream` = stablyai/orca (push disabled).
-- `upstream` fetches only `main` and release tags. Its tags are stored as **`upstream/v*`** so they never mix with eddy-omega's own `v0.x` tags (Orca already has a `v0.0.1` tag). Set this up in a new clone with:
+- Remotes: `origin` = eddy, `upstream` = stablyai/orca (push disabled).
+- `upstream` fetches only `main` and release tags. Its tags are stored as **`upstream/v*`** so they never mix with eddy's own `v0.x` tags (Orca already has a `v0.0.1` tag). Set this up in a new clone with:
   ```powershell
   git remote add upstream https://github.com/stablyai/orca.git
   git remote set-url --push upstream DISABLED
@@ -20,9 +20,9 @@
   git config --add remote.upstream.fetch '+refs/tags/v*:refs/tags/upstream/v*'
   git fetch upstream
   ```
-- eddy-omega's `main` is a short stack of commits on top of an upstream **stable release tag** (currently an exception: `upstream/main` at `d667e54b02` plus a commit stamping Orca `1.4.237`; see `DESIGN.md` O24 and §7.1 "Base off a stable tag" before the next sync).
+- eddy's `main` is a short stack of commits on top of an upstream **stable release tag** (currently an exception: `upstream/main` at `d667e54b02` plus a commit stamping Orca `1.4.237`; see `DESIGN.md` O24 and §7.1 "Base off a stable tag" before the next sync).
 - Orca tags a stable release every 1–3 days, each on a short release branch cut from `main` (the tagged commit is not on `upstream/main`). Don't chase every release: sync every week or two, or when an upstream fix is needed. Only rebase onto stable tags (never `-rc.N`).
-- Before a sync, read **"Carried changes: rebase notes" in [`DESIGN.md`](./DESIGN.md) §7.1**: it lists the upstream work eddy-omega carries ahead of Orca (Copilot chat, a backport of stablyai/orca#30899, plus its Ask guard), how to tell whether the new tag already ships it, which commits to drop or keep (use `git rebase -i --onto …`), and how to resolve its known conflicts.
+- Before a sync, read **"Carried changes: rebase notes" in [`DESIGN.md`](./DESIGN.md) §7.1**: it lists the upstream work eddy carries ahead of Orca (Copilot chat, a backport of stablyai/orca#30899, plus its Ask guard), how to tell whether the new tag already ships it, which commits to drop or keep (use `git rebase -i --onto …`), and how to resolve its known conflicts.
 - To move to a newer release:
   ```powershell
   git fetch upstream
@@ -31,25 +31,25 @@
   git push --force-with-lease origin main
   ```
   Then update "currently `upstream/…`" above and in `DESIGN.md`.
-- Check what eddy-omega changes: `git log --oneline upstream/<base-tag>..main` and `git diff --stat upstream/<base-tag> main`.
+- Check what eddy changes: `git log --oneline upstream/<base-tag>..main` and `git diff --stat upstream/<base-tag> main`.
 - After a sync:
   - `pnpm install --frozen-lockfile`, then review the `pnpm-lock.yaml` and `pnpm-workspace.yaml` diffs (new packages, new `allowBuilds` or `minimumReleaseAgeExclude` entries) before running anything else.
   - Type-check and run eddy's tests (see Building). For carried changes, also run the checks in `DESIGN.md` §7.1 ("Verify after the sync"): eddy CI does not run the ported Copilot tests.
-  - Workflows that upstream *adds* start out enabled on GitHub: run `pwsh eddy/scripts/disable-upstream-workflows.ps1 -Repo <owner>/eddy-omega`.
+  - Workflows that upstream _adds_ start out enabled on GitHub: run `pwsh eddy/scripts/disable-upstream-workflows.ps1 -Repo <owner>/eddy`.
 - **Never `git push --tags`**: it would publish the ~1,000 `upstream/*` tags. Push single tags only.
 
 ## First push to a new GitHub repo (once)
 
 Orca has ~90 workflows (push/PR triggers, hourly scheduled builds, self-hosted runners, cloud deployments). None of them should run here.
 
-1. Create an empty repo. Before the first push, turn Actions off: Settings → Actions → General → "Disable actions" (or `gh api -X PUT repos/<owner>/eddy-omega/actions/permissions -F enabled=false`).
-2. `git remote add origin https://<user>@github.com/<owner>/eddy-omega.git` (the user name in the URL pins Git Credential Manager to that account), then `git push -u origin main` (`--force` if GitHub created an initial commit; Orca's MIT `LICENSE` must stay as it is).
-3. Leave Actions off until eddy-omega has its own workflows. Then, with `gh` signed in to the account that owns the repo (`gh auth status`, `gh auth switch`), turn Actions on and immediately disable every upstream workflow:
-   `gh api -X PUT repos/<owner>/eddy-omega/actions/permissions -F enabled=true`
-   `pwsh eddy/scripts/disable-upstream-workflows.ps1 -Repo <owner>/eddy-omega`
+1. Create an empty repo. Before the first push, turn Actions off: Settings → Actions → General → "Disable actions" (or `gh api -X PUT repos/<owner>/eddy/actions/permissions -F enabled=false`).
+2. `git remote add origin https://<user>@github.com/<owner>/eddy.git` (the user name in the URL pins Git Credential Manager to that account), then `git push -u origin main` (`--force` if GitHub created an initial commit; Orca's MIT `LICENSE` must stay as it is).
+3. Leave Actions off until eddy has its own workflows. Then, with `gh` signed in to the account that owns the repo (`gh auth status`, `gh auth switch`), turn Actions on and immediately disable every upstream workflow:
+   `gh api -X PUT repos/<owner>/eddy/actions/permissions -F enabled=true`
+   `pwsh eddy/scripts/disable-upstream-workflows.ps1 -Repo <owner>/eddy`
    Only eddy-owned workflows (`.github/workflows/eddy-*.yml`) stay enabled.
 
-Done for `Tom-from-6520/eddy-omega` on 2026-10-19: pushed with Actions off, then Actions on with every upstream workflow disabled.
+Done for `Tom-from-6520/eddy` on 2026-10-19: pushed with Actions off, then Actions on with every upstream workflow disabled.
 
 ## Building locally
 
@@ -57,22 +57,22 @@ Done for `Tom-from-6520/eddy-omega` on 2026-10-19: pushed with Actions off, then
 - Install with `pnpm install --frozen-lockfile` (never `pnpm update` or an unfrozen install; dependency changes come from upstream syncs). Run with `pnpm dev`.
 - Verify: `pnpm tc` (type-check), `pnpm test <path>` (tests), `pnpm run check:code-quality:changed` (lint changed files), `pnpm format`. eddy's own test set: `node --test "eddy/build/*.test.cjs"` and `pnpm run test:node $(node eddy/scripts/eddy-test-files.mjs)`.
 - Agent-launched app runs and tests use `ORCA_BACKGROUND_LAUNCH=1` (see Orca's `AGENTS.md`).
-- Packaging: `pnpm build:win`, `pnpm build:linux`, or `pnpm build:unpack` build **Orca-branded** apps. An eddy omega package needs `EDDY_RELEASE_BUILD=1` for the whole build, then `pnpm build:release` and `pnpm exec electron-builder --config eddy/build/electron-builder.eddy.config.cjs --win` (or `--linux AppImage deb`); see `.github/workflows/eddy-build.yml`. Cross-architecture builds need `pnpm install:release` first.
-- Parallel work: one Git worktree per task, next to the main clone: `git worktree add -b <branch> ..\eddy-omega-worktrees\<name> main`. Each worktree needs its own `pnpm install --frozen-lockfile`. Remove it with `git worktree remove ..\eddy-omega-worktrees\<name>`.
+- Packaging: `pnpm build:win`, `pnpm build:linux`, or `pnpm build:unpack` build **Orca-branded** apps. An eddy package needs `EDDY_RELEASE_BUILD=1` for the whole build, then `pnpm build:release` and `pnpm exec electron-builder --config eddy/build/electron-builder.eddy.config.cjs --win` (or `--linux AppImage deb`); see `.github/workflows/eddy-build.yml`. Cross-architecture builds need `pnpm install:release` first.
+- Parallel work: one Git worktree per task, next to the main clone: `git worktree add -b <branch> ..\eddy-worktrees\<name> main`. Each worktree needs its own `pnpm install --frozen-lockfile`. Remove it with `git worktree remove ..\eddy-worktrees\<name>`.
 
 ## Versions
 
-- eddy-omega's own version is `eddyVersion` in [`eddy/product.json`](./product.json): **0.1.x = alpha, 0.2.x = beta, 1.x = stable**; bump the patch for each release. `quality` (`alpha`, `beta`, `stable`) names the stage. Release tags are `v<eddyVersion>` (e.g. `v0.1.0`).
+- eddy's own version is `eddyVersion` in [`eddy/product.json`](./product.json): **0.1.x = alpha, 0.2.x = beta, 1.x = stable**; bump the patch for each release. `quality` (`alpha`, `beta`, `stable`) names the stage. Release tags are `v<eddyVersion>` (e.g. `v0.1.0`).
 - The `version` in `package.json` stays **Orca's** (e.g. `1.4.230`). Never change it: remote and mobile peers check it (`minCompatibleDesktopVersion`), the CLI is stamped with it, and crash reports use it. Only the updater uses `eddyVersion` (below).
 - `eddyVersion` lives in its own file because upstream's release commit rewrites the `version` line of `package.json` every release; a field next to it would conflict at every rebase.
 
 ## eddy release builds (identity and updater)
 
-eddy omega differs from Orca only in **release builds**: `EDDY_RELEASE_BUILD=1` makes electron-vite (and the `orcad` esbuild bundle) define `EDDY_VERSION` and `EDDY_QUALITY` (`eddy/build/eddy-vite-defines.mjs`), which `src/shared/eddy/eddy-build.ts` reads. Outside eddy release builds nothing is defined, so dev runs, tests and plain `pnpm build:*` keep Orca's behavior and bytes, and upstream tests stay valid.
+eddy differs from Orca only in **release builds**: `EDDY_RELEASE_BUILD=1` makes electron-vite (and the `orcad` esbuild bundle) define `EDDY_VERSION` and `EDDY_QUALITY` (`eddy/build/eddy-vite-defines.mjs`), which `src/shared/eddy/eddy-build.ts` reads. Outside eddy release builds nothing is defined, so dev runs, tests and plain `pnpm build:*` keep Orca's behavior and bytes, and upstream tests stay valid.
 
-- **Identity:** app id `dev.eddy.omega`, name `eddy-omega` (install folder, `%APPDATA%\eddy-omega`, `/opt/eddy-omega`), display name "eddy" (the pinwheel icon lives in `resources/build/icon.*` and `resources/logo.svg`), `%LOCALAPPDATA%\eddy-omega` for the relocated terminal daemon, `/usr/bin/eddy-omega` on Linux. Packaging: `eddy/build/eddy-electron-builder.cjs` (applied to Orca's config by `electron-builder.eddy.config.cjs`, which refuses to run without `EDDY_RELEASE_BUILD=1`), `eddy/nsis/eddy-installer-hooks.nsh`, `eddy/linux/after-*.sh` (copies of Orca's; re-check them after upstream syncs).
+- **Identity:** app id `dev.eddy`, name `eddy` (install folder, `%APPDATA%\eddy`, `/opt/eddy`), display name "eddy" (the pinwheel icon lives in `resources/build/icon.*` and `resources/logo.svg`), `%LOCALAPPDATA%\eddy` for the relocated terminal daemon, `/usr/bin/eddy` on Linux. Packaging: `eddy/build/eddy-electron-builder.cjs` (applied to Orca's config by `electron-builder.eddy.config.cjs`, which refuses to run without `EDDY_RELEASE_BUILD=1`), `eddy/nsis/eddy-installer-hooks.nsh`, `eddy/linux/after-*.sh` (copies of Orca's; re-check them after upstream syncs).
 - **Folders:** `~/.eddy` instead of `~/.orca` (agent hooks, credentials, keybindings, `orcad` data, the same on SSH/WSL hosts) and `.eddy/` instead of `.orca/` inside repos: `APP_HOME_DIR_NAME` / `REPO_DATA_DIR_NAME` in `src/shared/eddy/eddy-build.ts`. When upstream adds a new `'.orca'` path, use these constants (`git grep -n "'\.orca" -- src` after a sync).
-- **Updater:** reads `Tom-from-6520/eddy-omega` releases for every channel and compares `eddyVersion`: the release tags (`v0.x`), electron-updater's current version (`src/main/eddy/eddy-updater-version.ts`), and the `version` in the published `latest.yml` / `latest-linux.yml` (`eddy/build/eddy-update-manifest.cjs`). Orca's changelog is off.
+- **Updater:** reads `Tom-from-6520/eddy` releases for every channel and compares `eddyVersion`: the release tags (`v0.x`), electron-updater's current version (`src/main/eddy/eddy-updater-version.ts`), and the `version` in the published `latest.yml` / `latest-linux.yml` (`eddy/build/eddy-update-manifest.cjs`). Orca's changelog is off.
 - **Update nudges (push users off a broken release):** commit `eddy/update-nudge.json` on `main`, e.g. `{ "id": "fix-0.1.3", "maxVersion": "0.1.2" }` (`minVersion` / `maxVersion` are `eddyVersion`s; a new `id` re-shows the update card even if dismissed). Installed builds poll it from `raw.githubusercontent.com`; delete the file when the campaign is over.
 - **About and Settings** show `0.1.2 alpha (Orca 1.4.230)` (`eddyVersionLabel` in `src/shared/eddy/eddy-build.ts`, from `EDDY_VERSION` / `EDDY_QUALITY`).
 - **Orca cloud features** (feedback, crash reports, mobile, Orca account, artifact/skill sharing): feedback and crash reports are blocked in `postFeedback`; the UI entry points are disabled and marked "(orca feat)" via `src/renderer/src/eddy/orca-feature.tsx` (`git grep -n "orca-feature" -- src` lists them). The star prompt is off.

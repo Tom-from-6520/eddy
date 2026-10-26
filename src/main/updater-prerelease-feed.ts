@@ -3,7 +3,7 @@ import { parse } from 'yaml'
 import { eddyAwareReleaseRepo } from '../shared/eddy/eddy-build'
 import { compareVersions, isPrereleaseVersion, isValidVersion } from './updater-fallback'
 
-// eddy: eddy release builds read eddy-omega's releases.
+// eddy: eddy release builds read eddy's releases.
 const RELEASE_REPO = eddyAwareReleaseRepo('stablyai/orca')
 const ATOM_FEED_URL = `https://github.com/${RELEASE_REPO}/releases.atom`
 const RELEASES_DOWNLOAD_BASE = `https://github.com/${RELEASE_REPO}/releases/download`

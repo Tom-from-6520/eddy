@@ -5,10 +5,10 @@ const { stampManifestVersion } = require('./eddy-update-manifest.cjs')
 
 const manifest = `version: 1.4.230
 files:
-  - url: eddy-omega-0.1.1-windows-x64-setup.exe
+  - url: eddy-0.1.1-windows-x64-setup.exe
     sha512: abc
     size: 10
-path: eddy-omega-0.1.1-windows-x64-setup.exe
+path: eddy-0.1.1-windows-x64-setup.exe
 sha512: abc
 releaseDate: '2026-10-19T10:00:00.000Z'
 `

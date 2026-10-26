@@ -7,7 +7,7 @@ import {
   eddyAwareIdentity
 } from '../../shared/eddy/eddy-build'
 
-// eddy: eddy omega's name and Windows app id in eddy release builds.
+// eddy: eddy's name and Windows app id in eddy release builds.
 const BASE_APP_NAME = eddyAwareIdentity('Orca', EDDY_APP_NAME)
 const BASE_APP_USER_MODEL_ID = eddyAwareIdentity('com.stablyai.orca', EDDY_APP_USER_MODEL_ID)
 const MAX_LABEL_LENGTH = 80

@@ -209,7 +209,7 @@ export abstract class UpdaterReleaseFeed extends UpdaterInstallExecution {
     }
     this.clearPrereleaseFallbackContext()
     this.clearPublishingWindowLastGoodCheck()
-    // eddy: eddy release builds fall back to eddy-omega's latest release.
+    // eddy: eddy release builds fall back to eddy's latest release.
     const url = `https://github.com/${eddyAwareReleaseRepo('stablyai/orca')}/releases/latest/download`
     console.info(
       `[updater] release feed fallback: current=${currentVersion} includePrerelease=${includePrerelease} → ${url}`

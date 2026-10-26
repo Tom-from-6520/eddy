@@ -1,15 +1,15 @@
 'use strict'
-// eddy omega packaging: Orca's electron-builder config with eddy omega's identity, artifact
+// eddy packaging: Orca's electron-builder config with eddy's identity, artifact
 // names and release repo. Applied by eddy/build/electron-builder.eddy.config.cjs.
 const { linkSync, mkdtempSync, readFileSync, rmSync } = require('node:fs')
 const { dirname, join } = require('node:path')
 
-const EDDY_APP_ID = 'dev.eddy.omega'
+const EDDY_APP_ID = 'dev.eddy'
 // File- and path-safe name: install folder, %APPDATA% folder, Linux /opt folder and WM_CLASS.
-const EDDY_PRODUCT_NAME = 'eddy-omega'
+const EDDY_PRODUCT_NAME = 'eddy'
 const EDDY_DISPLAY_NAME = 'eddy'
 const EDDY_RELEASE_OWNER = 'Tom-from-6520'
-const EDDY_RELEASE_REPO = 'eddy-omega'
+const EDDY_RELEASE_REPO = 'eddy'
 
 function readEddyVersion(root) {
   const product = JSON.parse(readFileSync(join(root, 'eddy', 'product.json'), 'utf8'))
@@ -22,9 +22,9 @@ function readEddyVersion(root) {
 /** Artifact file names for a version; the release workflow and the update manifests use them. */
 function eddyArtifactNames(eddyVersion) {
   return {
-    windowsSetup: `eddy-omega-${eddyVersion}-windows-x64-setup.exe`,
-    linuxAppImage: `eddy-omega-${eddyVersion}-linux-x86_64.AppImage`,
-    linuxDeb: `eddy-omega-${eddyVersion}-linux-amd64.deb`
+    windowsSetup: `eddy-${eddyVersion}-windows-x64-setup.exe`,
+    linuxAppImage: `eddy-${eddyVersion}-linux-x86_64.AppImage`,
+    linuxDeb: `eddy-${eddyVersion}-linux-amd64.deb`
   }
 }
 
@@ -74,7 +74,7 @@ function eddyElectronBuilderConfig(base, { eddyVersion, env, eddyDir }) {
     ...base,
     appId: EDDY_APP_ID,
     productName: EDDY_PRODUCT_NAME,
-    protocols: [{ name: EDDY_DISPLAY_NAME, schemes: ['eddy-omega'] }],
+    protocols: [{ name: EDDY_DISPLAY_NAME, schemes: ['eddy'] }],
     artifactBuildCompleted: withOrcaAppImageName(base.artifactBuildCompleted),
     extraMetadata: {
       ...base.extraMetadata,

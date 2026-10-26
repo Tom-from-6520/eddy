@@ -1,6 +1,6 @@
 'use strict'
 // Writes eddyVersion into electron-updater manifests (latest.yml, latest-linux.yml).
-// electron-builder writes the app version (Orca's), but installed eddy omega builds compare
+// electron-builder writes the app version (Orca's), but installed eddy builds compare
 // eddyVersion (src/main/eddy/eddy-updater-version.ts).
 //   node eddy/build/eddy-update-manifest.cjs <eddyVersion> <manifest>...
 const { readFileSync, writeFileSync } = require('node:fs')

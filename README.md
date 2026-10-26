@@ -1,6 +1,6 @@
-# eddy-omega
+# eddy
 
-eddy-omega is our fork for the working-context workflow we want to build. It is intentionally small, opinionated, and focused on the product decisions in `eddy/DESIGN.md` instead of the upstream Orca product messaging.
+eddy is our fork for the working-context workflow we want to build. It is intentionally small, opinionated, and focused on the product decisions in `eddy/DESIGN.md` instead of the upstream Orca product messaging.
 
 ## What this repo is for
 
@@ -34,4 +34,4 @@ pnpm run check:code-quality:changed
 
 ## Repo hygiene
 
-This repo should stay about eddy-omega: our decisions, our code, and our design notes. Public docs and PRs should not mention unrelated upstream Orca PRs or issues just to explain the fork; that creates noise on the original upstream thread without helping this project.
+This repo should stay about eddy: our decisions, our code, and our design notes. Public docs and PRs should not mention unrelated upstream Orca PRs or issues just to explain the fork; that creates noise on the original upstream thread without helping this project.

@@ -1,7 +1,7 @@
-# eddy omega release pipeline.
+# eddy release pipeline.
 # - Set `eddyVersion` in eddy/product.json (e.g. 0.1.1), commit, then push the tag `v<eddyVersion>`
 #   (e.g. v0.1.1) -> build Windows x64 + Linux x64 and publish a GitHub release. Installed eddy
-#   omega builds update from it (latest.yml / latest-linux.yml carry eddyVersion).
+#   builds update from it (latest.yml / latest-linux.yml carry eddyVersion).
 #   Versions: 0.1.x = alpha, 0.2.x = beta, 1.x = stable.
 # - Run manually (Actions -> eddy build -> Run workflow) -> build only; installers are kept as run
 #   artifacts for 14 days.
@@ -22,7 +22,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # Compiles eddy omega's identity and updater switches in (src/shared/eddy/eddy-build.ts) and
+  # Compiles eddy's identity and updater switches in (src/shared/eddy/eddy-build.ts) and
   # unlocks eddy/build/electron-builder.eddy.config.cjs.
   EDDY_RELEASE_BUILD: '1'
   NODE_OPTIONS: --max-old-space-size=6144
@@ -112,7 +112,7 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory release | Out-Null
-          $setup = "eddy-omega-$env:VERSION-windows-x64-setup.exe"
+          $setup = "eddy-$env:VERSION-windows-x64-setup.exe"
           foreach ($file in @($setup, "$setup.blockmap", 'latest.yml')) {
             if (-not (Test-Path "dist/$file")) { throw "missing dist/$file" }
             Copy-Item "dist/$file" release/
@@ -189,7 +189,7 @@ jobs:
       - name: Collect outputs
         run: |
           mkdir release
-          for file in "eddy-omega-$VERSION-linux-x86_64.AppImage" "eddy-omega-$VERSION-linux-amd64.deb" latest-linux.yml; do
+          for file in "eddy-$VERSION-linux-x86_64.AppImage" "eddy-$VERSION-linux-amd64.deb" latest-linux.yml; do
             test -f "dist/$file" || { echo "::error::missing dist/$file"; exit 1; }
             cp "dist/$file" release/
           done
@@ -237,11 +237,11 @@ jobs:
         run: |
           orca=$(node -p "require('./package.json').version")
           stage=""; if [ "$QUALITY" != stable ]; then stage=" ($QUALITY)"; fi
-          notes="eddy omega **$LABEL**$stage, based on Orca v$orca.
+          notes="eddy **$LABEL**$stage, based on Orca v$orca.
 
-          Install: Windows \`eddy-omega-$LABEL-windows-x64-setup.exe\` (updates itself); Linux \`eddy-omega-$LABEL-linux-x86_64.AppImage\` (updates itself) or \`sudo apt install ./eddy-omega-$LABEL-linux-amd64.deb\`.
+          Install: Windows \`eddy-$LABEL-windows-x64-setup.exe\` (updates itself); Linux \`eddy-$LABEL-linux-x86_64.AppImage\` (updates itself) or \`sudo apt install ./eddy-$LABEL-linux-amd64.deb\`.
 
           Builds are not code-signed yet."
           gh release create "$TAG" dist/* --repo "$REPO" --target "$COMMIT" --draft \
-            --title "eddy omega $LABEL$stage" --notes "$notes" --generate-notes
+            --title "eddy $LABEL$stage" --notes "$notes" --generate-notes
           gh release edit "$TAG" --repo "$REPO" --draft=false --latest

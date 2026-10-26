@@ -20,10 +20,10 @@ describe('eddy build switches', () => {
     expect(eddyVersionLabel('1.4.230')).toBe('1.4.230')
   })
 
-  it('names the eddy-omega release repo and its update campaign file', () => {
-    expect(EDDY_RELEASE_REPO).toBe('Tom-from-6520/eddy-omega')
+  it('names the eddy release repo and its update campaign file', () => {
+    expect(EDDY_RELEASE_REPO).toBe('Tom-from-6520/eddy')
     expect(EDDY_UPDATE_NUDGE_URL).toBe(
-      'https://raw.githubusercontent.com/Tom-from-6520/eddy-omega/main/eddy/update-nudge.json'
+      'https://raw.githubusercontent.com/Tom-from-6520/eddy/main/eddy/update-nudge.json'
     )
   })
 

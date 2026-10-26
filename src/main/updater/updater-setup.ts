@@ -161,7 +161,7 @@ export class UpdaterSetup extends UpdaterDownloadInstall {
     if (this.activeUpdateSource === 'release') {
       autoUpdater.setFeedURL({
         provider: 'generic',
-        // eddy: eddy release builds update from eddy-omega's releases.
+        // eddy: eddy release builds update from eddy's releases.
         url: `https://github.com/${eddyAwareReleaseRepo('stablyai/orca')}/releases/latest/download`
       })
     }

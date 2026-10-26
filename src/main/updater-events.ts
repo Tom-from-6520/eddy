@@ -134,7 +134,7 @@ export function registerAutoUpdaterHandlers({
     void (async () => {
       try {
         const changelog =
-          // eddy: Orca's changelog doesn't describe eddy omega releases.
+          // eddy: Orca's changelog doesn't describe eddy releases.
           isLocalBuildCheck() || isPinnedBuildCheck() || isEddyBuild()
             ? null
             : await fetchChangelog(info.version, getUpdaterAppVersion()).catch(() => null)

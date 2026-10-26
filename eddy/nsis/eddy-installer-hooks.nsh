@@ -1,16 +1,16 @@
-; electron-builder NSIS hooks for the eddy omega Windows installer (eddy's copy of
+; electron-builder NSIS hooks for the eddy Windows installer (eddy's copy of
 ; config/nsis/orca-installer-hooks.nsh; re-check it after upstream syncs).
 ;
-; Differences from Orca's hooks, so eddy omega can sit next to an Orca install:
+; Differences from Orca's hooks, so eddy can sit next to an Orca install:
 ; - own ProgIDs, and no Software\Classes\Applications\Orca.exe entries (both apps' exe is Orca.exe);
 ; - no taskkill by image name on uninstall (it would also kill Orca and Orca's terminal daemon);
-; - removes eddy omega's own relocated daemon folder (%LOCALAPPDATA%\eddy-omega), matching
+; - removes eddy's own relocated daemon folder (%LOCALAPPDATA%\eddy), matching
 ;   EDDY_LOCAL_DATA_DIR_NAME in src/shared/eddy/eddy-build.ts.
 
 !include "${__FILEDIR__}\..\..\config\nsis\orca-process-check.nsh"
 
-!define MARKDOWN_PROGID "eddyOmega.Markdown"
-!define TABULAR_PROGID "eddyOmega.Tabular"
+!define MARKDOWN_PROGID "eddy.Markdown"
+!define TABULAR_PROGID "eddy.Tabular"
 
 !macro EDDY_REGISTER_DOCUMENT_OPEN_WITH EXT PROGID
   WriteRegNone SHELL_CONTEXT "Software\Classes\${EXT}\OpenWithProgids" "${PROGID}"
@@ -41,8 +41,8 @@
 !macro customUnInstall
   ; Updates run this uninstaller too; the relocated daemon must survive them.
   ${ifNot} ${isUpdated}
-    RMDir /r "$LOCALAPPDATA\eddy-omega\daemon-host"
-    RMDir /r "$LOCALAPPDATA\eddy-omega\daemon-host-profiles"
+    RMDir /r "$LOCALAPPDATA\eddy\daemon-host"
+    RMDir /r "$LOCALAPPDATA\eddy\daemon-host-profiles"
   ${endIf}
   DeleteRegKey SHELL_CONTEXT "Software\Classes\${MARKDOWN_PROGID}"
   DeleteRegKey SHELL_CONTEXT "Software\Classes\${TABULAR_PROGID}"
